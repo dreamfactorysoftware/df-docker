@@ -22,7 +22,7 @@ If your database runs inside another container you can simply link it under the 
 
 # Start container
 ## With external MySQL server
-`docker run -it --rm -p 127.0.0.1:23000:80 -v /PATH_TO_ENV_FILE:/opt/dreamfactory/.env dreamfactorysoftware/v2`
+`docker run -d -p 127.0.0.1:80:80 -v /PATH_TO_ENV_FILE:/opt/dreamfactory/.env dreamfactorysoftware/v2`
 
 ## With linked MySQL server
-`docker run -it --rm -p 127.0.0.1:23000:80 -v /PATH_TO_ENV_FILE:/opt/dreamfactory/.env --link df-mysql:db dreamfactorysoftware/v2`
+`docker run -d -p 127.0.0.1:80:80 -v /PATH_TO_ENV_FILE:/opt/dreamfactory/.env --link df-mysql:db dreamfactorysoftware/v2`
