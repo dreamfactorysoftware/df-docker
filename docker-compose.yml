@@ -12,7 +12,7 @@ web:
 mysql:
   environment:
     MYSQL_ROOT_PASSWORD: root
-    MYSQL_DATABASE: dsp
-    MYSQL_USER: dsp
-    MYSQL_PASSWORD: dsp
+    MYSQL_DATABASE: dreamfactory
+    MYSQL_USER: df_admin
+    MYSQL_PASSWORD: df_admin
   image: mysql
