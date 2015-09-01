@@ -1,0 +1,18 @@
+web:
+  environment:
+    SERVERNAME: dreamfactory.local
+  build: .
+  volumes:
+   - ./.env:/opt/dreamfactory/.env
+  links:
+    - mysql:db
+  ports:
+    - "80:80"
+
+mysql:
+  environment:
+    MYSQL_ROOT_PASSWORD: root
+    MYSQL_DATABASE: dsp
+    MYSQL_USER: dsp
+    MYSQL_PASSWORD: dsp
+  image: mysql
