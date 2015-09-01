@@ -15,7 +15,7 @@ You can also pass all the options via command line using the flag `-e`.
 - Edit `docker-compose.yml` if needed
 - Add `.env` to directory
 - Run `docker-compose build`
-- Run `docker-compose up -d`
+- Run `docker-compose up -d
 
 # Link database container
 If your database runs inside another container you can simply link it under the name `db`.
