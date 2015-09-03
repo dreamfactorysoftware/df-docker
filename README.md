@@ -1,37 +1,65 @@
 # df-docker
 Docker container for DreamFactory 2.0.
 
-# Configuration
-You can choose between the following ways to configure the application. Choose the one which works best for your setup.
+# Configuration method 1 (use docker-compose)
+The easiest way to configure the DreamFactory application is to use docker-compose.
 
-## .env file
+## Clone the df-docker repo
+`cd ~/repos` (or wherever you want the clone of the repo to be)  
+`git clone https://github.com/dreamfactorysoftware/df-docker.git`  
+`cd df-docker`
+
+## Edit `docker-compose.yml` (optional)
+
+## Copy .env file to df-docker directory
 The application looks for a `.env` file to read its configuration. You can find an example [here](https://github.com/dreamfactorysoftware/dreamfactory/blob/master/.env-dist)
 Copy the file, adjust the settings to your needs and save as `.env`. When starting the container you have to add the file to the container using the option `-v /PATH_TO_ENV_FILE:/opt/dreamfactory/.env`.
+
+## Build containers
+`sudo docker-compose build`
+
+## Start containers
+`sudo docker-compose up -d`
+
+## Add an entry to /etc/hosts
+`127.0.0.1 dreamfactory.app`
+
+## Access the app
+Go to 127.0.0.1 in your browser. It will take some time the first time. You will be asked to create your first admin user.
+
+# Configuration method 2 (build your own)
+If you don't want to use docker-compose you can build the images yourself.
+
+## Clone the df-docker repo
+`cd ~/repos` (or wherever you want the clone of the repo to be)  
+`git clone https://github.com/dreamfactorysoftware/df-docker.git`  
+`cd df-docker`
+
+## Copy .env file to df-docker directory
+The application looks for a `.env` file to read its configuration. You can find an example [here](https://github.com/dreamfactorysoftware/dreamfactory/blob/master/.env-dist)
+Copy the file, adjust the settings to your needs and save as `.env`. When starting the container you have to add the file to the container using the option `-v /PATH_TO_ENV_FILE:/opt/dreamfactory/.env`.
+
+## Build containers
+`docker build -t dreamfactory/v2 .`
+*Ensure that the database container is also created*
 
 ## Parameters
 You can also pass all the options via command line using the flag `-e`. 
 
-## Compose
-- Edit `docker-compose.yml` if needed
-- Add `.env` to directory
-- Run `docker-compose build`
-- Run `docker-compose up -d
-
 # Link database container
 If your database runs inside another container you can simply link it under the name `db`.
 
-# Start container
-*Ensure that the used database use and datbase are created*
+## Start containers with external MySQL server
+`docker run -d -p 127.0.0.1:80:80 -v /PATH_TO_ENV_FILE:/opt/dreamfactory/.env dreamfactory/v2`
 
-## With external MySQL server
-`docker run -d -p 127.0.0.1:80:80 -v /PATH_TO_ENV_FILE:/opt/dreamfactory/.env dreamfactorysoftware/v2`
+## Start containers with linked MySQL server
+`docker run -d -p 127.0.0.1:80:80 -v /PATH_TO_ENV_FILE:/opt/dreamfactory/.env --link df-mysql:db dreamfactory/v2`
 
-## With linked MySQL server
-`docker run -d -p 127.0.0.1:80:80 -v /PATH_TO_ENV_FILE:/opt/dreamfactory/.env --link df-mysql:db dreamfactorysoftware/v2`
+## Add an entry to /etc/hosts
+127.0.0.1 dreamfactory.app
 
-# Build the container on your own
-- `git clone git@github.com:dreamfactorysoftware/df-docker.git`
-- `cd df-docker`
-- `docker build -t dreamfactorysoftware/v2 .`
-- add/edit `.env`
-- Start container as described under **Start container**
+## Access the app
+Go to 127.0.0.1 in your browser. It will take some time the first time. You will be asked to create your first admin user.
+
+
+
