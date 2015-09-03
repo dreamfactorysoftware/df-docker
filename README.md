@@ -40,13 +40,13 @@ The application looks for a `.env` file to read its configuration. You can find 
 Copy the file, adjust the settings to your needs and save as `.env`. When starting the container you have to add the file to the container using the option `-v /PATH_TO_ENV_FILE:/opt/dreamfactory/.env`.
 
 ## Build containers
-`docker build -t dreamfactory/v2 .`
+`docker build -t dreamfactory/v2 .`  
 *Ensure that the database container is also created*
 
 ## Parameters
 You can also pass all the options via command line using the flag `-e`. 
 
-# Link database container
+## Link database container
 If your database runs inside another container you can simply link it under the name `db`.
 
 ## Start containers with external MySQL server
