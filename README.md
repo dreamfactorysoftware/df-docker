@@ -21,8 +21,17 @@ You can also pass all the options via command line using the flag `-e`.
 If your database runs inside another container you can simply link it under the name `db`.
 
 # Start container
+*Ensure that the used database use and datbase are created*
+
 ## With external MySQL server
 `docker run -d -p 127.0.0.1:80:80 -v /PATH_TO_ENV_FILE:/opt/dreamfactory/.env dreamfactorysoftware/v2`
 
 ## With linked MySQL server
 `docker run -d -p 127.0.0.1:80:80 -v /PATH_TO_ENV_FILE:/opt/dreamfactory/.env --link df-mysql:db dreamfactorysoftware/v2`
+
+# Build the container on your own
+- `git clone git@github.com:dreamfactorysoftware/df-docker.git`
+- `cd df-docker`
+- `docker build -t dreamfactorysoftware/v2 .`
+- add/edit `.env`
+- Start container as described under **Start container**
