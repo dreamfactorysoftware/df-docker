@@ -13,9 +13,9 @@ The easiest way to configure the DreamFactory application is to use docker-compo
 
 ## 3) Copy .env file to df-docker directory
 The application looks for a `.env` file to read its configuration. You can find an example [here](https://github.com/dreamfactorysoftware/dreamfactory/blob/master/.env-dist)
-Copy the file, adjust the settings to your needs and save as `.env`. When starting the container you have to add the file to the container using the option `-v /PATH_TO_ENV_FILE:/opt/dreamfactory/.env`.
+Copy the file, adjust the settings to your needs and save as `.env`.
 
-## 4) Build containers
+## 4) Build images
 `sudo docker-compose build`
 
 ## 5) Start containers
@@ -39,13 +39,13 @@ If you don't want to use docker-compose you can build the images yourself.
 The application looks for a `.env` file to read its configuration. You can find an example [here](https://github.com/dreamfactorysoftware/dreamfactory/blob/master/.env-dist)
 Copy the file, adjust the settings to your needs and save as `.env`. When starting the container you have to add the file to the container using the option `-v /PATH_TO_ENV_FILE:/opt/dreamfactory/.env`.
 
-## 3) Build dreamfactory/v2 container
+## 3) Build dreamfactory/v2 image
 `docker build -t dreamfactory/v2 .`  
 
 ## 4) Ensure that the database container is created and running
 `docker run -d --name df-mysql -e "MYSQL_ROOT_PASSWORD=root" -e "MYSQL_DATABASE=dreamfactory" -e "MYSQL_USER=df_admin" -e "MYSQL_PASSWORD=df_admin" mysql`
 
-## 5) Start containers with linked MySQL server or with external MySQL server  
+## 5) Start the dreamfactory/v2 container with linked MySQL server or with external MySQL server  
 If your database runs inside another container you can simply link it under the name `db`.  
   
 `docker run -d -p 127.0.0.1:80:80 -v /PATH_TO_ENV_FILE:/opt/dreamfactory/.env --link df-mysql:db dreamfactory/v2`  
@@ -59,6 +59,10 @@ or
 
 ## 7) Access the app
 Go to 127.0.0.1 in your browser. It will take some time the first time. You will be asked to create your first admin user.
+
+# Notes
+- PATH_TO_ENV_FILE must be an absolute path on your file system like `/home/todd/repos/df-docker/.env`.
+- You may have to use `sudo` for Docker commands depending on your setup.
 
 
 
