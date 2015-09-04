@@ -31,7 +31,7 @@ RUN git clone https://github.com/dreamfactorysoftware/dreamfactory.git /opt/drea
 WORKDIR /opt/dreamfactory
 
 # install packages
-RUN composer install
+RUN composer install --no-dev
 
 RUN chown -R www-data /opt/dreamfactory
 
