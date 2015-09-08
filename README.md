@@ -6,10 +6,10 @@ Docker container for DreamFactory 2.0.
 ## Get Docker
 - See: [https://docs.docker.com/installation](https://docs.docker.com/installation)
 
-## Get Docker Compose (optional)
+### Get Docker Compose (optional)
 - See [https://docs.docker.com/compose/install](https://docs.docker.com/compose/install)
 
-## Using MS SQL?
+### Using MS SQL?
 The Docker image we provide does not include PHP drivers for MS SQL. If you need this functionality add the following to the 'apt-get install' line in the Dockerfile and build yourself a new image using the steps below.
 
 php5-sybase php5-odbc freetds-common
@@ -22,7 +22,7 @@ php5-sybase php5-odbc freetds-common
 ## 2) Ensure that the database container is created and running
 `docker run -d --name df-mysql -e "MYSQL_ROOT_PASSWORD=root" -e "MYSQL_DATABASE=dreamfactory" -e "MYSQL_USER=df_admin" -e "MYSQL_PASSWORD=df_admin" mysql`
 
-## 3) Start the dreamfactory/v2 container with linked MySQL server or with external MySQL server  
+## 3) Start the dreamfactorysoftware/df-docker container with linked MySQL server or with external MySQL server  
 If your database runs inside another container you can simply link it under the name `db`.  
   
 `docker run -d -p 127.0.0.1:80:80 -v /PATH_TO_ENV_FILE:/opt/dreamfactory/.env --link df-mysql:db dreamfactorysoftware/df-docker`
