@@ -26,7 +26,7 @@ The application looks for a `.env` file to read its configuration. You can find 
 Copy the file, adjust the settings to your needs and save as `.env`. When starting the container you have to add the file to the container using the option `-v /PATH_TO_ENV_FILE:/opt/dreamfactory/.env`.
 
 ## 3) Pull DreamFactory image
-- run `docker pull dreamfactorysoftware/dsp-docker`
+`docker pull dreamfactorysoftware/df-docker`
 
 ## 4) Ensure that the database container is created and running
 `docker run -d --name df-mysql -e "MYSQL_ROOT_PASSWORD=root" -e "MYSQL_DATABASE=dreamfactory" -e "MYSQL_USER=df_admin" -e "MYSQL_PASSWORD=df_admin" mysql`
