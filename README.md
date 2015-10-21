@@ -21,9 +21,8 @@ php5-sybase php5-odbc freetds-common
 `git clone https://github.com/dreamfactorysoftware/df-docker.git`  
 `cd df-docker`
 
-## 2) Copy .env file to df-docker directory
-The application looks for a `.env` file to read its configuration. You can find an example [here](https://github.com/dreamfactorysoftware/dreamfactory/blob/master/.env-dist)
-Copy the file, adjust the settings to your needs and save as `.env`. When starting the container you have to add the file to the container using the option `-v /PATH_TO_ENV_FILE:/opt/dreamfactory/.env`.
+## 2) Edit .env file (optional)
+The application looks for a `.env` file to read its configuration. The default settings should be sufficient in most cases, but you can adjust the settings to your needs. When starting the container you have to add the file to the container using the option `-v /PATH_TO_ENV_FILE:/opt/dreamfactory/.env`.
 
 ## 3) Pull DreamFactory image
 `docker pull dreamfactorysoftware/df-docker`
@@ -52,9 +51,8 @@ The easiest way to configure the DreamFactory application is to use docker-compo
 
 ## 2) Edit `docker-compose.yml` (optional)
 
-## 3) Copy .env file to df-docker directory
-The application looks for a `.env` file to read its configuration. You can find an example [here](https://github.com/dreamfactorysoftware/dreamfactory/blob/master/.env-dist)
-Copy the file, adjust the settings to your needs and save as `.env`.
+## 3) Edit .env file (optional)
+The application looks for a `.env` file to read its configuration. The default settings should be sufficient in most cases, but you can adjust the settings to your needs.
 
 ## 4) Build images
 `docker-compose build`
@@ -76,9 +74,8 @@ If you don't want to use docker-compose you can build the images yourself.
 `git clone https://github.com/dreamfactorysoftware/df-docker.git`  
 `cd df-docker`
 
-## 2) Copy .env file to df-docker directory
-The application looks for a `.env` file to read its configuration. You can find an example [here](https://github.com/dreamfactorysoftware/dreamfactory/blob/master/.env-dist)
-Copy the file, adjust the settings to your needs and save as `.env`. When starting the container you have to add the file to the container using the option `-v /PATH_TO_ENV_FILE:/opt/dreamfactory/.env`.
+## 2) Edit .env file (optional)
+The application looks for a `.env` file to read its configuration. The default settings should be sufficient in most cases, but you can adjust the settings to your needs. When starting the container you have to add the file to the container using the option `-v /PATH_TO_ENV_FILE:/opt/dreamfactory/.env`.
 
 ## 3) Build dreamfactory/v2 image
 `docker build -t dreamfactory/v2 .`  

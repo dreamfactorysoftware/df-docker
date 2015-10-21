@@ -5,7 +5,7 @@ MAINTAINER Felix Glaeske<felix@psy-coding.com>
 ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update && \
-    apt-get install -y git-core curl apache2 php5 php5-common php5-cli php5-curl php5-json php5-mcrypt php5-mysql php5-pgsql && \
+    apt-get install -y git-core curl apache2 php5 php5-common php5-cli php5-curl php5-json php5-mcrypt php5-mysql php5-pgsql php5-sqlite && \
     rm -rf /var/lib/apt/lists/*
 
 # install composer
