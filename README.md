@@ -33,7 +33,11 @@ The application looks for a `.env` file to read its configuration. The default s
 ## 5) Start the dreamfactorysoftware/df-docker container with linked MySQL server or with external MySQL server  
 If your database runs inside another container you can simply link it under the name `db`.  
   
-`docker run -d -p 127.0.0.1:80:80 -v /PATH_TO_ENV_FILE:/opt/dreamfactory/.env --link df-mysql:db dreamfactorysoftware/df-docker`
+`docker run -d -p 127.0.0.1:80:80 --name dreamfactory -v /PATH_TO_ENV_FILE:/opt/dreamfactory/.env --link df-mysql:db dreamfactorysoftware/df-docker`
+
+`docker exec dreamfactory php artisan key:generate`
+
+`docker restart dreamfactory`
 
 ## 6) Add an entry to /etc/hosts
 127.0.0.1 dreamfactory.app
