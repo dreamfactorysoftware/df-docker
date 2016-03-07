@@ -1,6 +1,6 @@
-FROM debian:jessie
+FROM ubuntu:latest
 
-MAINTAINER Felix Glaeske<felix@psy-coding.com>
+MAINTAINER David Weiner<davidweiner@dreamfactory.com>
 
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -30,16 +30,29 @@ RUN git clone https://github.com/dreamfactorysoftware/dreamfactory.git /opt/drea
 
 WORKDIR /opt/dreamfactory
 
-# install packages
-RUN composer install --no-dev
+# Uncomment this line if you're building for Bluemix and using redis for your cache
+#RUN composer require "predis/predis:~1.0"
 
-RUN chown -R www-data /opt/dreamfactory
+# install packages
+RUN composer install
+
+RUN php artisan dreamfactory:setup --no-app-key --db_driver=mysql --df_install=Docker
+
+# Comment out the line above and uncomment these this line if you're building a docker image for Bluemix.  If you're
+# not using redis for your cache, change the value of --cache_driver to memcached or remove it for the standard
+# file based cache.  If you're using a mysql service, change db_driver to mysql
+#RUN php artisan dreamfactory:setup --no-app-key --db_driver=pgsql --cache_driver=redis --df_install="Docker(Bluemix)"
+
+RUN chown -R www-data:www-data /opt/dreamfactory
 
 ADD docker-entrypoint.sh /docker-entrypoint.sh
 
 # forward request and error logs to docker log collector
 RUN ln -sf /dev/stdout /var/log/apache2/access.log
 RUN ln -sf /dev/stderr /var/log/apache2/error.log
+
+# Uncomment this is you are building for Bluemix and will be using ElephantSQL
+#ENV BM_USE_URI=true
 
 EXPOSE 80
 
