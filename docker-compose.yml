@@ -2,8 +2,6 @@ web:
   environment:
     SERVERNAME: dreamfactory.local
   build: .
-  volumes:
-   - ./.env:/opt/dreamfactory/.env
   links:
     - mysql:db
   ports:
