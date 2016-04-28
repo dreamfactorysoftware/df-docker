@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM ubuntu:trusty
 
 MAINTAINER David Weiner<davidweiner@dreamfactory.com>
 
@@ -46,6 +46,7 @@ RUN php artisan dreamfactory:setup --no-app-key --db_driver=mysql --df_install=D
 RUN chown -R www-data:www-data /opt/dreamfactory
 
 ADD docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
 
 # forward request and error logs to docker log collector
 RUN ln -sf /dev/stdout /var/log/apache2/access.log
