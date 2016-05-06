@@ -1,12 +1,15 @@
-FROM ubuntu:latest
+FROM ubuntu:trusty
 
 MAINTAINER David Weiner<davidweiner@dreamfactory.com>
 
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN apt-get update && \
-    apt-get install -y git-core curl apache2 php5 php5-common php5-cli php5-curl php5-json php5-mcrypt php5-mysql php5-pgsql php5-sqlite && \
+RUN apt-get update && apt-get install -y \
+    git-core curl apache2 php5 php5-common php5-cli php5-curl php5-json php5-mcrypt php5-mysqlnd php5-pgsql php5-sqlite \
+    php-pear php5-dev openssl pkg-config libpcre3-dev && \
     rm -rf /var/lib/apt/lists/*
+
+RUN pecl install mongodb && echo "extension=mongodb.so" >> `php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||"`
 
 # install composer
 RUN curl -sS https://getcomposer.org/installer | php && \
