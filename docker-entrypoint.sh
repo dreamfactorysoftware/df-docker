@@ -9,7 +9,6 @@ sed -i "s;%SERVERNAME%;${SERVERNAME:=dreamfactory.app};g" /etc/apache2/sites-ava
 if [ -n "$REDIS_HOST" ]; then
   sed -i "s/#REDIS_HOST=127.0.0.1/REDIS_HOST=$REDIS_HOST/" .env
   sed -i "s/#REDIS_DATABASE=/REDIS_DATABASE=$REDIS_DATABASE/" .env
-  sed -i "s/#REDIS_PASSWORD=/REDIS_PASSWORD=$REDIS_PASSWORD/" .env
   sed -i "s/CACHE_DRIVER=file/CACHE_DRIVER=redis/" .env
 fi
 if [ -n "$REDIS_PASSWORD" ]; then
@@ -29,12 +28,16 @@ if [ -n "$DB_PORT_3306_TCP_ADDR" ]; then
   export DB_HOST=$DB_PORT_3306_TCP_ADDR
 fi
 
-# generate AppKey on first run
-cd /opt/dreamfactory
-if [ ! -e .first_run_done ]; then
-  echo "Generating APP_KEY"
-  php artisan key:generate
-  touch .first_run_done
+# do we have an existing APP_KEY we should reuse ?
+if [ -n "$APP_KEY" ]; then
+  sed -i "s/APP_KEY=SomeRandomString/APP_KEY=$APP_KEY/" .env
+else
+  # generate AppKey on first run
+  if [ ! -e .first_run_done ]; then
+    echo "Generating APP_KEY"
+    php artisan key:generate
+    touch .first_run_done
+  fi
 fi
 
 # Make sure we're not confused by old, incompletely-shutdown httpd

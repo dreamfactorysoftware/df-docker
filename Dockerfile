@@ -43,13 +43,10 @@ RUN php artisan dreamfactory:setup --no-app-key --db_driver=mysql --df_install=D
 # file based cache.  If you're using a mysql service, change db_driver to mysql
 #RUN php artisan dreamfactory:setup --no-app-key --db_driver=pgsql --cache_driver=redis --df_install="Docker(Bluemix)"
 
-# Uncomment this line and set your existing APP_KEY if you want to reuse existing DF database and configs
-# You also have to make sure that docker-entrypoint.sh is NEVER generating a new key.
-#RUN sed -i 's/APP_KEY=SomeRandomString/APP_KEY=foobar_baz/' .env
-
 RUN chown -R www-data:www-data /opt/dreamfactory
 
 ADD docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
 
 # forward request and error logs to docker log collector
 RUN ln -sf /dev/stdout /var/log/apache2/access.log
