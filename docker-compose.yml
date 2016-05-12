@@ -4,6 +4,7 @@ web:
   build: .
   links:
     - mysql:db
+    - redis:rd
   ports:
     - "80:80"
 
@@ -14,3 +15,6 @@ mysql:
     MYSQL_USER: df_admin
     MYSQL_PASSWORD: df_admin
   image: mysql
+
+redis:
+  image: redis

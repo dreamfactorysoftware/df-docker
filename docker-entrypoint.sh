@@ -28,6 +28,11 @@ if [ -n "$DB_PORT_3306_TCP_ADDR" ]; then
   export DB_HOST=$DB_PORT_3306_TCP_ADDR
 fi
 
+# check if we have a linked redis container
+if [ -n "$RD_PORT_6379_TCP_ADDR" ]; then
+  export REDIS_HOST=$RD_PORT_6379_TCP_ADDR
+fi
+
 # do we have an existing APP_KEY we should reuse ?
 if [ -n "$APP_KEY" ]; then
   sed -i "s/APP_KEY=SomeRandomString/APP_KEY=$APP_KEY/" .env

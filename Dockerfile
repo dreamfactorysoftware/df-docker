@@ -33,13 +33,13 @@ RUN git clone https://github.com/dreamfactorysoftware/dreamfactory.git /opt/drea
 
 WORKDIR /opt/dreamfactory
 
-# Uncomment this line if you're building for Bluemix and using redis for your cache
-#RUN composer require "predis/predis:~1.0"
+# Uncomment this line if you're building for Bluemix and/or using redis for your cache
+RUN composer require "predis/predis:~1.0"
 
 # install packages
 RUN composer install
 
-RUN php artisan dreamfactory:setup --no-app-key --db_driver=mysql --df_install=Docker
+RUN php artisan dreamfactory:setup --no-app-key --db_driver=mysql --df_install=Docker --cache_driver=redis --redis_host=rd --redis_port=6379
 
 # Comment out the line above and uncomment these this line if you're building a docker image for Bluemix.  If you're
 # not using redis for your cache, change the value of --cache_driver to memcached or remove it for the standard
