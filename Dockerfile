@@ -10,6 +10,8 @@ RUN apt-get update && apt-get install -y \
     rm -rf /var/lib/apt/lists/*
 
 RUN pecl install mongodb && echo "extension=mongodb.so" >> `php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||"`
+RUN echo "extension=mongodb.so" > /etc/php5/mods-available/mongodb.ini
+RUN ln -s /etc/php5/mods-available/mongodb.ini /etc/php5/apache2/conf.d/21-mongodb.ini
 
 # install composer
 RUN curl -sS https://getcomposer.org/installer | php && \
