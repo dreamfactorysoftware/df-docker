@@ -1,4 +1,4 @@
-FROM ubuntu:trusty
+FROM ubuntu:wily
 
 MAINTAINER David Weiner<davidweiner@dreamfactory.com>
 
@@ -6,12 +6,25 @@ ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update && apt-get install -y \
     git-core curl apache2 php5 php5-common php5-cli php5-curl php5-json php5-mcrypt php5-mysqlnd php5-pgsql php5-sqlite \
-    php-pear php5-dev openssl pkg-config libpcre3-dev && \
+    php-pear php5-dev php5-ldap php5-mssql openssl pkg-config libpcre3-dev libv8-dev python nodejs zip && \
     rm -rf /var/lib/apt/lists/*
 
-RUN pecl install mongodb && echo "extension=mongodb.so" >> `php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||"`
+RUN apt-get update && apt-get install -y python-pip npm
+
+RUN ln -s /usr/bin/nodejs /usr/bin/node
+
+RUN pip install bunch
+RUN npm install sync-request
+
+RUN pecl install mongodb
 RUN echo "extension=mongodb.so" > /etc/php5/mods-available/mongodb.ini
 RUN ln -s /etc/php5/mods-available/mongodb.ini /etc/php5/apache2/conf.d/21-mongodb.ini
+RUN ln -s /etc/php5/mods-available/mongodb.ini /etc/php5/cli/conf.d/21-mongodb.ini
+
+RUN pecl install v8js-0.1.3
+RUN echo "extension=v8js.so" > /etc/php5/mods-available/v8js.ini
+RUN ln -s /etc/php5/mods-available/v8js.ini /etc/php5/apache2/conf.d/21-v8js.ini
+RUN ln -s /etc/php5/mods-available/v8js.ini /etc/php5/cli/conf.d/21-v8js.ini
 
 # install composer
 RUN curl -sS https://getcomposer.org/installer | php && \
