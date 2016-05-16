@@ -27,15 +27,18 @@ php5-sybase php5-odbc freetds-common
 ## 3) Ensure that the database container is created and running
 `docker run -d --name df-mysql -e "MYSQL_ROOT_PASSWORD=root" -e "MYSQL_DATABASE=dreamfactory" -e "MYSQL_USER=df_admin" -e "MYSQL_PASSWORD=df_admin" mysql`
 
-## 4) Start the dreamfactorysoftware/df-docker container with linked MySQL server or with external MySQL server  
-If your database runs inside another container you can simply link it under the name `db`.  
-  
-`docker run -d -p 127.0.0.1:80:80 --link df-mysql:db dreamfactorysoftware/df-docker`
+## 4) Ensure that the redis container is created and running
+`docker run -d --name df-redis redis`
 
-## 5) Add an entry to /etc/hosts
+## 5) Start the dreamfactorysoftware/df-docker container with linked MySQL and Redis server 
+If your database and redis runs inside another container you can simply link it under the name `db` and `rd` respectively. 
+  
+`docker run -d -p 127.0.0.1:80:80 --link df-mysql:db --link df-redis:rd dreamfactorysoftware/df-docker`
+
+## 6) Add an entry to /etc/hosts
 127.0.0.1 dreamfactory.app
 
-## 6) Access the app
+## 7) Access the app
 Go to 127.0.0.1 in your browser. It will take some time the first time. You will be asked to create your first admin user.
 
 # Configuration method 2 (use docker-compose)
@@ -74,19 +77,18 @@ If you don't want to use docker-compose you can build the images yourself.
 ## 3) Ensure that the database container is created and running
 `docker run -d --name df-mysql -e "MYSQL_ROOT_PASSWORD=root" -e "MYSQL_DATABASE=dreamfactory" -e "MYSQL_USER=df_admin" -e "MYSQL_PASSWORD=df_admin" mysql`
 
-## 4) Start the dreamfactory/v2 container with linked MySQL server or with external MySQL server  
-If your database runs inside another container you can simply link it under the name `db`.  
-  
-`docker run -d -p 127.0.0.1:80:80 --link df-mysql:db dreamfactory/v2`  
-  
-or  
-  
-`docker run -d -p 127.0.0.1:80:80 dreamfactory/v2`
+## 4) Ensure that the redis container is created and running
+`docker run -d --name df-redis redis`
 
-## 5) Add an entry to /etc/hosts
+## 5) Start the dreamfactorysoftware/df-docker container with linked MySQL and Redis server 
+If your database and redis runs inside another container you can simply link it under the name `db` and `rd` respectively. 
+  
+`docker run -d -p 127.0.0.1:80:80 --link df-mysql:db --link df-redis:rd dreamfactorysoftware/df-docker`
+
+## 6) Add an entry to /etc/hosts
 127.0.0.1 dreamfactory.app
 
-## 6) Access the app
+## 7) Access the app
 Go to 127.0.0.1 in your browser. It will take some time the first time. You will be asked to create your first admin user.
 
 # Notes
