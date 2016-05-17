@@ -7,9 +7,8 @@ sed -i "s;%SERVERNAME%;${SERVERNAME:=dreamfactory.app};g" /etc/apache2/sites-ava
 
 # do we have configs for a Redis Cache ?
 if [ -n "$REDIS_HOST" ]; then
-  sed -i "s/#REDIS_HOST=127.0.0.1/REDIS_HOST=$REDIS_HOST/" .env
+  sed -i "s/REDIS_HOST=rd/REDIS_HOST=$REDIS_HOST/" .env
   sed -i "s/#REDIS_DATABASE=/REDIS_DATABASE=$REDIS_DATABASE/" .env
-  sed -i "s/CACHE_DRIVER=file/CACHE_DRIVER=redis/" .env
 fi
 if [ -n "$REDIS_PASSWORD" ]; then
   sed -i "s/#REDIS_PASSWORD=/REDIS_PASSWORD=$REDIS_PASSWORD/" .env
