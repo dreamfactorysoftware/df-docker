@@ -33,7 +33,7 @@ php5-sybase php5-odbc freetds-common
 ## 5) Start the dreamfactorysoftware/df-docker container with linked MySQL and Redis server 
 If your database and redis runs inside another container you can simply link it under the name `db` and `rd` respectively. 
   
-`docker run -d -p --name df-web 127.0.0.1:80:80 -e "DB_HOST=db" -e "DB_USERNAME=df_admin" -e "DB_PASSWORD=df_admin" -e "DB_DATABASE=dreamfactory" -e "REDIS_HOST=rd" -e "REDIS_DATABASE=0" -e "REDIS_PORT=6379" --link df-mysql:db --link df-redis:rd dreamfactorysoftware/df-docker`
+`docker run -d --name df-web -p 127.0.0.1:80:80 -e "DB_HOST=db" -e "DB_USERNAME=df_admin" -e "DB_PASSWORD=df_admin" -e "DB_DATABASE=dreamfactory" -e "REDIS_HOST=rd" -e "REDIS_DATABASE=0" -e "REDIS_PORT=6379" --link df-mysql:db --link df-redis:rd dreamfactorysoftware/df-docker`
 
 ## 6) Add an entry to /etc/hosts
 127.0.0.1 dreamfactory.app
@@ -83,7 +83,7 @@ If you don't want to use docker-compose you can build the images yourself.
 ## 5) Start the dreamfactorysoftware/df-docker container with linked MySQL and Redis server 
 If your database and redis runs inside another container you can simply link it under the name `db` and `rd` respectively. 
   
-`docker run -d -p --name df-web 127.0.0.1:80:80 -e "DB_HOST=db" -e "DB_USERNAME=df_admin" -e "DB_PASSWORD=df_admin" -e "DB_DATABASE=dreamfactory" -e "REDIS_HOST=rd" -e "REDIS_DATABASE=0" -e "REDIS_PORT=6379" --link df-mysql:db --link df-redis:rd dreamfactory/v2`
+`docker run -d --name df-web -p 127.0.0.1:80:80 -e "DB_HOST=db" -e "DB_USERNAME=df_admin" -e "DB_PASSWORD=df_admin" -e "DB_DATABASE=dreamfactory" -e "REDIS_HOST=rd" -e "REDIS_DATABASE=0" -e "REDIS_PORT=6379" --link df-mysql:db --link df-redis:rd dreamfactory/v2`
 
 ## 6) Add an entry to /etc/hosts
 127.0.0.1 dreamfactory.app
