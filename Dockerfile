@@ -37,6 +37,10 @@ RUN php5enmod mcrypt
 
 ADD dreamfactory.conf /etc/apache2/sites-available/dreamfactory.conf
 RUN a2ensite dreamfactory
+RUN a2dismod mpm_prefork
+RUN rm /etc/apache2/mods-available/mpm_prefork.conf
+ADD mpm_prefork.conf /etc/apache2/mods-available/mpm_prefork.conf
+RUN a2enmod mpm_prefork
 
 RUN a2enmod rewrite
 
@@ -64,7 +68,6 @@ ADD docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
 # forward request and error logs to docker log collector
-# RUN ln -sf /dev/stdout /var/log/apache2/access.log
 RUN ln -sf /dev/stderr /var/log/apache2/error.log
 
 # Uncomment this is you are building for Bluemix and will be using ElephantSQL
