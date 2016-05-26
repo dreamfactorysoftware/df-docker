@@ -1,6 +1,6 @@
 FROM ubuntu:wily
 
-MAINTAINER David Weiner<davidweiner@dreamfactory.com>
+MAINTAINER Arif Islam<arif@dreamfactory.com>
 
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -64,7 +64,7 @@ ADD docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
 # forward request and error logs to docker log collector
-RUN ln -sf /dev/stdout /var/log/apache2/access.log
+# RUN ln -sf /dev/stdout /var/log/apache2/access.log
 RUN ln -sf /dev/stderr /var/log/apache2/error.log
 
 # Uncomment this is you are building for Bluemix and will be using ElephantSQL
