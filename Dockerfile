@@ -15,13 +15,11 @@ RUN pip install bunch
 
 RUN pecl install mongodb && \
     echo "extension=mongodb.so" > /etc/php5/mods-available/mongodb.ini && \
-    ln -s /etc/php5/mods-available/mongodb.ini /etc/php5/apache2/conf.d/21-mongodb.ini && \
-    ln -s /etc/php5/mods-available/mongodb.ini /etc/php5/cli/conf.d/21-mongodb.ini
+    php5enmod mongodb
 
 RUN pecl install v8js-0.1.3 && \
     echo "extension=v8js.so" > /etc/php5/mods-available/v8js.ini && \
-    ln -s /etc/php5/mods-available/v8js.ini /etc/php5/apache2/conf.d/21-v8js.ini && \
-    ln -s /etc/php5/mods-available/v8js.ini /etc/php5/cli/conf.d/21-v8js.ini
+    php5enmod v8js
 
 # install composer
 RUN curl -sS https://getcomposer.org/installer | php && \
@@ -48,9 +46,6 @@ RUN a2enmod rewrite
 RUN git clone https://github.com/dreamfactorysoftware/dreamfactory.git /opt/dreamfactory
 
 WORKDIR /opt/dreamfactory
-
-# Uncomment this line if you're building for Bluemix and/or using redis for your cache
-RUN composer require "predis/predis:~1.0"
 
 # install packages
 RUN composer install
