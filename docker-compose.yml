@@ -1,20 +1,29 @@
-web:
-  environment:
-    SERVERNAME: dreamfactory.local
-  build: .
-  links:
-    - mysql:db
-    - redis:rd
-  ports:
-    - "80:80"
+version: '2'
+services:
+  web:
+    environment:
+      SERVERNAME: dreamfactory.local
+      DB_HOST: db
+      DB_USERNAME: df_admin
+      DB_PASSWORD: df_admin
+      DB_DATABASE: dreamfactory
+      REDIS_HOST: rd
+      REDIS_DATABASE: 0
+      REDIS_PORT: 6379
+    build: .
+    links:
+      - mysql:db
+      - redis:rd
+    ports:
+      - "80:80"
 
-mysql:
-  environment:
-    MYSQL_ROOT_PASSWORD: root
-    MYSQL_DATABASE: dreamfactory
-    MYSQL_USER: df_admin
-    MYSQL_PASSWORD: df_admin
-  image: mysql
+  mysql:
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: dreamfactory
+      MYSQL_USER: df_admin
+      MYSQL_PASSWORD: df_admin
+    image: mysql
 
-redis:
-  image: redis
+  redis:
+    image: redis
