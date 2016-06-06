@@ -45,6 +45,16 @@ else
   fi
 fi
 
+# do we have configs for Session management ?
+jwt_vars=("JWT_TTL" "JWT_REFRESH_TTL" "ALLOW_FOREVER_SESSIONS")
+for var in "${jwt_vars[@]}"
+do
+  if [ -n "${!var}" ]; then
+    echo "Setting DF_${var}"
+    sed -i "s/##DF_${var}=.*/DF_${var}=${!var}/" .env
+  fi
+done
+
 # Make sure we're not confused by old, incompletely-shutdown httpd
 # context after restarting the container.  httpd won't start correctly
 # if it thinks it is already running. Same path as APACHE_RUN_DIR in /etc/apache2/envvars
