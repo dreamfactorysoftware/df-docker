@@ -1,25 +1,28 @@
-FROM ubuntu:wily
+FROM ubuntu:xenial
 
 MAINTAINER Arif Islam<arif@dreamfactory.com>
 
 ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update && apt-get install -y \
-    git-core curl apache2 php5 php5-common php5-cli php5-curl php5-json php5-mcrypt php5-mysqlnd php5-pgsql php5-sqlite \
-    php-pear php5-dev php5-ldap php5-mssql openssl pkg-config libpcre3-dev libv8-dev python nodejs python-pip zip && \
-    rm -rf /var/lib/apt/lists/*
+    git-core curl apache2 libapache2-mod-php7.0 php7.0-common php7.0-cli php7.0-curl php7.0-json php7.0-mcrypt php7.0-mysqlnd php7.0-pgsql php7.0-sqlite \
+    php-pear php7.0-dev php7.0-ldap php7.0-sybase php7.0-mbstring php7.0-zip php7.0-soap openssl pkg-config python nodejs python-pip zip
+
+RUN rm -rf /var/lib/apt/lists/*
 
 RUN ln -s /usr/bin/nodejs /usr/bin/node
 
 RUN pip install bunch
 
 RUN pecl install mongodb && \
-    echo "extension=mongodb.so" > /etc/php5/mods-available/mongodb.ini && \
-    php5enmod mongodb
+    echo "extension=mongodb.so" > /etc/php/7.0/mods-available/mongodb.ini && \
+    phpenmod mongodb
 
-RUN pecl install v8js-0.1.3 && \
-    echo "extension=v8js.so" > /etc/php5/mods-available/v8js.ini && \
-    php5enmod v8js
+RUN mkdir -p /usr/lib /usr/include
+ADD v8/usr/lib/libv8* /usr/lib/
+ADD v8/usr/include /usr/include/
+ADD v8/usr/lib/php/20151012/v8js.so /usr/lib/php/20151012/v8js.so
+RUN echo "extension=v8js.so" > /etc/php/7.0/mods-available/v8js.ini && phpenmod v8js
 
 # install composer
 RUN curl -sS https://getcomposer.org/installer | php && \
@@ -28,18 +31,9 @@ RUN curl -sS https://getcomposer.org/installer | php && \
 
 RUN echo "ServerName localhost" | tee /etc/apache2/conf-available/servername.conf && \
     a2enconf servername
-
 RUN rm /etc/apache2/sites-enabled/000-default.conf
-
-RUN php5enmod mcrypt
-
 ADD dreamfactory.conf /etc/apache2/sites-available/dreamfactory.conf
 RUN a2ensite dreamfactory
-RUN a2dismod mpm_prefork
-RUN rm /etc/apache2/mods-available/mpm_prefork.conf
-ADD mpm_prefork.conf /etc/apache2/mods-available/mpm_prefork.conf
-RUN a2enmod mpm_prefork
-
 RUN a2enmod rewrite
 
 # get app src
@@ -48,7 +42,7 @@ RUN git clone https://github.com/dreamfactorysoftware/dreamfactory.git /opt/drea
 WORKDIR /opt/dreamfactory
 
 # install packages
-RUN composer install
+RUN composer install --no-dev
 
 RUN php artisan dreamfactory:setup --no-app-key --db_driver=mysql --df_install=Docker
 
