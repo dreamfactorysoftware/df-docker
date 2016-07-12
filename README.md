@@ -88,6 +88,8 @@ Go to 127.0.0.1 in your browser. It will take some time the first time. You will
 
 # Notes
 - You may have to use `sudo` for Docker commands depending on your setup.
+- By default, the container only sends apache error logs to STDOUT. If you also want to have dreamfactory.log, e.g. for forwarding via docker logging driver
+you can set environment variable `LOG_TO_STDOUT=true`
 
 # Configuration method 4 (build your own for IBM Bluemix)
 

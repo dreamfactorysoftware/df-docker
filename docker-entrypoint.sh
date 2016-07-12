@@ -60,6 +60,12 @@ done
 # if it thinks it is already running. Same path as APACHE_RUN_DIR in /etc/apache2/envvars
 rm -rf /var/run/apache2/*
 
+if [ -n "$LOG_TO_STDOUT" ]; then
+  echo "Also writing dreamfactory.log messages to STDOUT"
+  # we cannot ln the log to stdout like with apache logs, so we continuously tail it
+  tail --pid $$ -F /opt/dreamfactory/storage/logs/dreamfactory.log &
+fi
+
 #
 # start Apache
 exec /usr/sbin/apachectl -e info -DFOREGROUND
