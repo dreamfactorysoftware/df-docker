@@ -33,7 +33,9 @@ RUN echo "ServerName localhost" | tee /etc/apache2/conf-available/servername.con
     a2enconf servername
 RUN rm /etc/apache2/sites-enabled/000-default.conf
 ADD dreamfactory.conf /etc/apache2/sites-available/dreamfactory.conf
+ADD headers.conf /etc/apache2/mods-available/headers.conf
 RUN a2ensite dreamfactory
+RUN a2enmod headers
 RUN a2enmod rewrite
 
 # get app src
