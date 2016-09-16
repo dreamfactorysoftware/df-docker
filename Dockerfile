@@ -6,7 +6,7 @@ ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update && apt-get install -y \
     git-core curl apache2 libapache2-mod-php7.0 php7.0-common php7.0-cli php7.0-curl php7.0-json php7.0-mcrypt php7.0-mysqlnd php7.0-pgsql php7.0-sqlite \
-    php-pear php7.0-dev php7.0-ldap php7.0-sybase php7.0-mbstring php7.0-zip php7.0-soap openssl pkg-config python nodejs python-pip zip
+    php-pear php7.0-dev php7.0-ldap php7.0-sybase php7.0-mbstring php7.0-zip php7.0-soap openssl pkg-config python nodejs python-pip zip ssmtp
 
 RUN rm -rf /var/lib/apt/lists/*
 
@@ -23,6 +23,8 @@ ADD v8/usr/lib/libv8* /usr/lib/
 ADD v8/usr/include /usr/include/
 ADD v8/usr/lib/php/20151012/v8js.so /usr/lib/php/20151012/v8js.so
 RUN echo "extension=v8js.so" > /etc/php/7.0/mods-available/v8js.ini && phpenmod v8js
+
+RUN echo 'sendmail_path = "/usr/sbin/ssmtp -t"' > /etc/php/7.0/cli/conf.d/mail.ini
 
 # install composer
 RUN curl -sS https://getcomposer.org/installer | php && \
