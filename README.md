@@ -9,6 +9,9 @@ Docker container for DreamFactory 2.2.x
 ### Get Docker Compose (optional)
 - See [https://docs.docker.com/compose/install](https://docs.docker.com/compose/install)
 
+## Environment options
+- See [this table](#environment-options-1)
+
 # Configuration method 1 (use Docker Hub Image)
 
 ## 1) Clone the df-docker repo
@@ -149,3 +152,24 @@ you are at a command prompt, run `echo $VCAP_SERVICES` which will display someth
 - If you use a service other than Redis Cloud, when starting the image, in step 7, you will have to add the environment
 variable `BM_REDIS_SERVICE_KEY` and set it to the value present in VCAP_SERVICES environment variable provided to the 
 container.  See the previous entry on how to view the values in VCAP SERVICES.
+
+# Environment options
+
+|Option|Description| required? |default
+|------|-----------|---|---|
+|SERVERNAME|Domain for DF|no|dreamfactory.app
+|DB_HOST|Database Host|no|localhost
+|DB_USERNAME|Database User|no|df_admin
+|DB_PASSWORD|Database Password|no|df_admin
+|DB_DATABASE|Database Name|no|dreamfactory
+|REDIS_HOST|Redis Cache Host|no|*uses file caching*
+|REDIS_DATABASE|Redis DB|only if REDIS_HOST set
+|REDIS_PORT|Redis Port|no|6379
+|REDIS_PASSWORD|Redis Password|no|*none used*
+|APP_KEY|Application Key|yes for immutability|*generates a key*
+|JWT_TTL|Login Token TTL|no|60
+|JWT_REFRESH_TTL|Login Token Refresh TTL|no|20160
+|ALLOW_FOREVER_SESSIONS|Allow refresh forever|no|false
+|LOG_TO_STDOUT|Forward log to STDOUT|no|*not forwarded*
+|SSMTP_mailhub|MX for mailing|yes if DF should mail|*no mailing capabilities*
+|SSMTP_XXXX|prefix options with SSMTP_|no|see the [man page](http://manpages.ubuntu.com/manpages/trusty/man5/ssmtp.conf.5.html)
