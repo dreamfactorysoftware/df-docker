@@ -10,7 +10,7 @@ Docker container for DreamFactory 2.2.x
 - See [https://docs.docker.com/compose/install](https://docs.docker.com/compose/install)
 
 ## Environment options
-- See [this table](#env-opts)
+- See [this table](#environment-options-1)
 
 # Configuration method 1 (use Docker Hub Image)
 
@@ -153,7 +153,7 @@ you are at a command prompt, run `echo $VCAP_SERVICES` which will display someth
 variable `BM_REDIS_SERVICE_KEY` and set it to the value present in VCAP_SERVICES environment variable provided to the 
 container.  See the previous entry on how to view the values in VCAP SERVICES.
 
-# Environment options<a name="env-opts"></a>
+# Environment options
 
 |Option|Description| required? |default
 |------|-----------|---|---|
