@@ -156,7 +156,7 @@ container.  See the previous entry on how to view the values in VCAP SERVICES.
 # Environment options<a name="env-opts"></a>
 
 |Option|Description| required? |default
-|------|-----------|-|-|
+|------|-----------|---|---|
 |SERVERNAME|Domain for DF|no|dreamfactory.app
 |DB_HOST|Database Host|no|localhost
 |DB_USERNAME|Database User|no|df_admin
