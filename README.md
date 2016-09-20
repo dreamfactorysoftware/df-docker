@@ -10,7 +10,7 @@ Docker container for DreamFactory 2.2.x
 - See [https://docs.docker.com/compose/install](https://docs.docker.com/compose/install)
 
 ## Environment options
-- See [this table](env-opts)
+- See [this table](#env-opts)
 
 # Configuration method 1 (use Docker Hub Image)
 
