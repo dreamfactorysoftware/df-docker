@@ -1,6 +1,18 @@
 #!/bin/bash
 set -e
 
+# mail setup
+CONF=/etc/ssmtp/ssmtp.conf
+rm $CONF
+
+for E in $(env)
+do
+  if [ "$(echo $E | sed -e '/^SSMTP_/!d' )" ]
+  then
+    echo $E | sed -e 's/^SSMTP_//' >> $CONF
+  fi
+done
+
 # update site configuration
 # if no servername is provided use dreamfactory.app as default
 sed -i "s;%SERVERNAME%;${SERVERNAME:=dreamfactory.app};g" /etc/apache2/sites-available/dreamfactory.conf
