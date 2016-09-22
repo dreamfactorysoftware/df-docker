@@ -1,5 +1,5 @@
 # df-docker
-Docker container for DreamFactory 2.2.x
+Docker container for DreamFactory 2.3.0
 
 # Prerequisites
 
