@@ -3,7 +3,7 @@ set -e
 
 # mail setup
 CONF=/etc/ssmtp/ssmtp.conf
-rm $CONF
+rm -f $CONF
 
 for E in $(env)
 do
