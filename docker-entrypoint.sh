@@ -15,7 +15,7 @@ done
 
 # update site configuration
 # if no servername is provided use dreamfactory.app as default
-sed -i "s;%SERVERNAME%;${SERVERNAME:=dreamfactory.app};g" /etc/apache2/sites-available/dreamfactory.conf
+sed -i "s;%SERVERNAME%;${SERVERNAME:=dreamfactory.app};g" /etc/nginx/sites-available/dreamfactory.conf
 
 # do we have configs for a Redis Cache ?
 if [ -n "$REDIS_HOST" ]; then
@@ -38,10 +38,16 @@ fi
 # do we have configs for an external DB ?
 if [ -n "$DB_HOST" ]; then
   echo "Setting DB_HOST, DB_USERNAME, DB_PASSWORD, and DB_DATABASE"
+  sed -i "s/DB_DRIVER=sqlite/DB_DRIVER=mysql/" .env
   sed -i "s/DB_HOST=localhost/DB_HOST=$DB_HOST/" .env
   sed -i "s/DB_USERNAME=df_admin/DB_USERNAME=$DB_USERNAME/" .env
   sed -i "s/DB_PASSWORD=df_admin/DB_PASSWORD=$DB_PASSWORD/" .env
   sed -i "s/DB_DATABASE=dreamfactory/DB_DATABASE=$DB_DATABASE/" .env
+fi
+
+if [ -n "$DB_DRIVER" ]; then
+  echo "Setting DB_DRIVER"
+  sed -i "s/DB_DRIVER=sqlite/DB_DRIVER=$DB_DRIVER/" .env
 fi
 
 # do we have an existing APP_KEY we should reuse ?
@@ -67,17 +73,14 @@ do
   fi
 done
 
-# Make sure we're not confused by old, incompletely-shutdown httpd
-# context after restarting the container.  httpd won't start correctly
-# if it thinks it is already running. Same path as APACHE_RUN_DIR in /etc/apache2/envvars
-rm -rf /var/run/apache2/*
-
 if [ -n "$LOG_TO_STDOUT" ]; then
   echo "Also writing dreamfactory.log messages to STDOUT"
-  # we cannot ln the log to stdout like with apache logs, so we continuously tail it
+  # we cannot ln the log to stdout like with nginx logs, so we continuously tail it
   tail --pid $$ -F /opt/dreamfactory/storage/logs/dreamfactory.log &
 fi
 
-#
-# start Apache
-exec /usr/sbin/apachectl -e info -DFOREGROUND
+# start php7.1-fpm
+service php7.1-fpm start
+
+# start nginx
+exec /usr/sbin/nginx -g "daemon off;"

@@ -4,9 +4,12 @@ MAINTAINER Arif Islam<arif@dreamfactory.com>
 
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN apt-get update && apt-get install -y \
-    git-core curl apache2 libapache2-mod-php7.0 php7.0-common php7.0-cli php7.0-curl php7.0-json php7.0-mcrypt php7.0-mysqlnd php7.0-pgsql php7.0-sqlite \
-    php-pear php7.0-dev php7.0-ldap php7.0-sybase php7.0-mbstring php7.0-zip php7.0-soap openssl pkg-config python nodejs python-pip zip ssmtp
+RUN apt-get update -y
+RUN apt-get install -y software-properties-common
+RUN add-apt-repository ppa:ondrej/php -y
+RUN apt-get update && apt-get install -y --allow-unauthenticated\
+    git-core curl nginx php7.1-fpm php7.1-common php7.1-cli php7.1-curl php7.1-json php7.1-mcrypt php7.1-mysqlnd php7.1-pgsql php7.1-sqlite \
+    php-pear php7.1-dev php7.1-ldap php7.1-sybase php7.1-mbstring php7.1-zip php7.1-soap openssl pkg-config python nodejs python-pip zip ssmtp
 
 RUN rm -rf /var/lib/apt/lists/*
 
@@ -15,30 +18,41 @@ RUN ln -s /usr/bin/nodejs /usr/bin/node
 RUN pip install bunch
 
 RUN pecl install mongodb && \
-    echo "extension=mongodb.so" > /etc/php/7.0/mods-available/mongodb.ini && \
+    echo "extension=mongodb.so" > /etc/php/7.1/mods-available/mongodb.ini && \
     phpenmod mongodb
 
-RUN mkdir -p /usr/lib /usr/include
-ADD v8/usr/lib/libv8* /usr/lib/
-ADD v8/usr/include /usr/include/
-ADD v8/usr/lib/php/20151012/v8js.so /usr/lib/php/20151012/v8js.so
-RUN echo "extension=v8js.so" > /etc/php/7.0/mods-available/v8js.ini && phpenmod v8js
+RUN git clone https://github.com/dreamfactorysoftware/v8-compiled.git /v8
+RUN mkdir /opt/v8
+WORKDIR /v8
+RUN cp -R ubuntu_16.04/PHP7.1/* /opt/v8
+RUN git clone https://github.com/phpv8/v8js.git /v8js
+WORKDIR /v8js
+RUN phpize
+RUN ./configure --with-v8js=/opt/v8
+RUN make && make install
+RUN echo "extension=v8js.so" > /etc/php/7.1/mods-available/v8js.ini
+RUN phpenmod v8js
+WORKDIR /
+RUN rm -Rf v8 && rm -Rf v8js
 
-RUN echo 'sendmail_path = "/usr/sbin/ssmtp -t"' > /etc/php/7.0/cli/conf.d/mail.ini
+RUN echo 'sendmail_path = "/usr/sbin/ssmtp -t"' > /etc/php/7.1/cli/conf.d/mail.ini
 
 # install composer
 RUN curl -sS https://getcomposer.org/installer | php && \
     mv composer.phar /usr/local/bin/composer && \
     chmod +x /usr/local/bin/composer
 
-RUN echo "ServerName localhost" | tee /etc/apache2/conf-available/servername.conf && \
-    a2enconf servername
-RUN rm /etc/apache2/sites-enabled/000-default.conf
-ADD dreamfactory.conf /etc/apache2/sites-available/dreamfactory.conf
-ADD headers.conf /etc/apache2/mods-available/headers.conf
-RUN a2ensite dreamfactory
-RUN a2enmod headers
-RUN a2enmod rewrite
+
+# Configure Nginx/php-fpm
+RUN rm /etc/nginx/sites-enabled/default
+ADD dreamfactory.conf /etc/nginx/sites-available/dreamfactory.conf
+RUN ln -s /etc/nginx/sites-available/dreamfactory.conf /etc/nginx/sites-enabled/dreamfactory.conf && \
+    sed -i "s/pm.max_children = 5/pm.max_children = 5000/" /etc/php/7.1/fpm/pool.d/www.conf && \
+    sed -i "s/pm.start_servers = 2/pm.start_servers = 150/" /etc/php/7.1/fpm/pool.d/www.conf && \
+    sed -i "s/pm.min_spare_servers = 1/pm.min_spare_servers = 100/" /etc/php/7.1/fpm/pool.d/www.conf && \
+    sed -i "s/pm.max_spare_servers = 3/pm.max_spare_servers = 200/" /etc/php/7.1/fpm/pool.d/www.conf && \
+    sed -i "s/worker_connections 768;/worker_connections 2048;/" /etc/nginx/nginx.conf && \
+    sed -i "s/keepalive_timeout 65;/keepalive_timeout 10;/" /etc/nginx/nginx.conf
 
 # get app src
 RUN git clone https://github.com/dreamfactorysoftware/dreamfactory.git /opt/dreamfactory
@@ -48,7 +62,7 @@ WORKDIR /opt/dreamfactory
 # install packages
 RUN composer install --no-dev
 
-RUN php artisan dreamfactory:setup --no-app-key --db_driver=mysql --df_install=Docker
+RUN php artisan dreamfactory:setup --no-app-key --db_driver=sqlite --df_install=Docker
 
 # Comment out the line above and uncomment these this line if you're building a docker image for Bluemix.  If you're
 # not using redis for your cache, change the value of --cache_driver to memcached or remove it for the standard
@@ -61,7 +75,7 @@ ADD docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
 # forward request and error logs to docker log collector
-RUN ln -sf /dev/stderr /var/log/apache2/error.log
+RUN ln -sf /dev/stderr /var/log/nginx/error.log
 
 # Uncomment this is you are building for Bluemix and will be using ElephantSQL
 #ENV BM_USE_URI=true

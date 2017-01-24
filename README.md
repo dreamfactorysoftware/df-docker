@@ -14,21 +14,16 @@ Docker container for DreamFactory 2.4.2
 
 # Configuration method 1 (use Docker Hub Image)
 
-## 1) Clone the df-docker repo
-`cd ~/repos` (or wherever you want the clone of the repo to be)  
-`git clone https://github.com/dreamfactorysoftware/df-docker.git`  
-`cd df-docker`
-
-## 2) Pull DreamFactory image
+## 1) Pull DreamFactory image
 `docker pull dreamfactorysoftware/df-docker`
 
-## 3) Ensure that the database container is created and running
+## 2) Ensure that the database container is created and running
 `docker run -d --name df-mysql -e "MYSQL_ROOT_PASSWORD=root" -e "MYSQL_DATABASE=dreamfactory" -e "MYSQL_USER=df_admin" -e "MYSQL_PASSWORD=df_admin" mysql`
 
-## 4) Ensure that the redis container is created and running
+## 3) Ensure that the redis container is created and running
 `docker run -d --name df-redis redis`
 
-## 5) Start the dreamfactorysoftware/df-docker container with linked MySQL and Redis server 
+## 4) Start the dreamfactorysoftware/df-docker container with linked MySQL and Redis server 
 If your database and redis runs inside another container you can simply link it under the name `db` and `rd` respectively. 
   
 `docker run -d --name df-web -p 127.0.0.1:80:80 -e "DB_HOST=db" -e "DB_USERNAME=df_admin" -e "DB_PASSWORD=df_admin" -e "DB_DATABASE=dreamfactory" -e "REDIS_HOST=rd" -e "REDIS_DATABASE=0" -e "REDIS_PORT=6379" --link df-mysql:db --link df-redis:rd dreamfactorysoftware/df-docker`
@@ -158,6 +153,7 @@ container.  See the previous entry on how to view the values in VCAP SERVICES.
 |Option|Description| required? |default
 |------|-----------|---|---|
 |SERVERNAME|Domain for DF|no|dreamfactory.app
+|DB_DRIVER|Database Driver (mysql,pgsql,sqlsrv,sqlite)|no|mysql when any DB_HOST supplied. Otherwise sqlite
 |DB_HOST|Database Host|no|localhost
 |DB_USERNAME|Database User|no|df_admin
 |DB_PASSWORD|Database Password|no|df_admin
