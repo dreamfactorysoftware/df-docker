@@ -1,0 +1,41 @@
+version: '2'
+services:
+  web:
+    environment:
+      SERVERNAME: dreamfactory.local
+      DB_HOST: mysql
+      DB_USERNAME: df_admin
+      DB_PASSWORD: df_admin
+      DB_DATABASE: dreamfactory
+      REDIS_HOST: redis
+      REDIS_DATABASE: 0
+      REDIS_PORT: 6379
+      APP_KEY: UseAny32CharactersLongStringHere
+    volumes:
+      - df-storage:/opt/dreamfactory/storage
+    build: .
+
+  load-balancer:
+    image: dockercloud/haproxy
+    links:
+        - web
+    volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      BALANCE: roundrobin
+    ports:
+        - "80:80"
+  mysql:
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: dreamfactory
+      MYSQL_USER: df_admin
+      MYSQL_PASSWORD: df_admin
+    image: mysql
+
+  redis:
+    image: redis
+
+volumes:
+  df-storage:
+    driver: local

@@ -21,6 +21,11 @@ services:
       REDIS_HOST: redis
       REDIS_DATABASE: 0
       REDIS_PORT: 6379
+    volumes:
+      - df-storage:/opt/dreamfactory/storage
     build: .
     ports:
       - "80:80"
+volumes:
+  df-storage:
+    driver: local

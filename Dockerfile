@@ -9,9 +9,7 @@ RUN apt-get install -y software-properties-common
 RUN add-apt-repository ppa:ondrej/php -y
 RUN apt-get update && apt-get install -y --allow-unauthenticated\
     git-core curl nginx php7.1-fpm php7.1-common php7.1-cli php7.1-curl php7.1-json php7.1-mcrypt php7.1-mysqlnd php7.1-pgsql php7.1-sqlite \
-    php-pear php7.1-dev php7.1-ldap php7.1-sybase php7.1-mbstring php7.1-zip php7.1-soap openssl pkg-config python nodejs python-pip zip ssmtp
-
-RUN rm -rf /var/lib/apt/lists/*
+    php-pear php7.1-dev php7.1-ldap php7.1-sybase php7.1-mbstring php7.1-zip php7.1-soap openssl pkg-config python nodejs python-pip zip ssmtp wget
 
 RUN ln -s /usr/bin/nodejs /usr/bin/node
 
@@ -35,7 +33,48 @@ RUN phpenmod v8js
 WORKDIR /
 RUN rm -Rf v8 && rm -Rf v8js
 
+# install php cassandra extension
+RUN mkdir /cassandra
+WORKDIR /cassandra
+RUN apt-get install -y libgmp-dev libpcre3-dev g++ make cmake libssl-dev
+RUN wget -q http://downloads.datastax.com/cpp-driver/ubuntu/16.04/dependenices/libuv/v1.8.0/libuv_1.8.0-1_amd64.deb && \
+    wget -q http://downloads.datastax.com/cpp-driver/ubuntu/16.04/dependenices/libuv/v1.8.0/libuv-dev_1.8.0-1_amd64.deb && \
+    wget -q http://downloads.datastax.com/cpp-driver/ubuntu/16.04/cassandra/v2.4.2/cassandra-cpp-driver_2.4.2-1_amd64.deb && \
+    wget -q http://downloads.datastax.com/cpp-driver/ubuntu/16.04/cassandra/v2.4.2/cassandra-cpp-driver-dev_2.4.2-1_amd64.deb
+RUN dpkg -i --force-overwrite libuv_1.8.0-1_amd64.deb
+RUN dpkg -i libuv-dev_1.8.0-1_amd64.deb
+RUN dpkg -i cassandra-cpp-driver_2.4.2-1_amd64.deb
+RUN dpkg -i cassandra-cpp-driver-dev_2.4.2-1_amd64.deb
+RUN git clone https://github.com/datastax/php-driver.git
+WORKDIR /cassandra/php-driver/ext
+RUN phpize
+RUN ./configure
+RUN make
+RUN make install
+RUN echo "extension=cassandra.so" > /etc/php/7.1/mods-available/cassandra.ini
+RUN phpenmod cassandra
+WORKDIR /
+RUN rm -Rf cassandra
+
+# install php couchbase extension
+RUN mkdir /couchbase
+WORKDIR /couchbase
+RUN wget http://packages.couchbase.com/releases/couchbase-release/couchbase-release-1.0-2-amd64.deb
+RUN dpkg -i couchbase-release-1.0-2-amd64.deb
+RUN apt-get update -y
+RUN apt-get install -y --allow-unauthenticated libcouchbase-dev build-essential
+RUN pecl install pcs-1.3.1
+RUN pecl install couchbase
+RUN echo "extension=pcs.so" > /etc/php/7.1/mods-available/pcs.ini
+RUN echo "extension=couchbase.so" > /etc/php/7.1/mods-available/couchbase.ini
+RUN phpenmod pcs && phpenmod couchbase
+WORKDIR /
+RUN rm -Rf couchbase
+
+# configure sendmail
 RUN echo 'sendmail_path = "/usr/sbin/ssmtp -t"' > /etc/php/7.1/cli/conf.d/mail.ini
+
+RUN rm -rf /var/lib/apt/lists/*
 
 # install composer
 RUN curl -sS https://getcomposer.org/installer | php && \
