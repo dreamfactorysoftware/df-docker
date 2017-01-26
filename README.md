@@ -71,6 +71,18 @@ The easiest way to configure the DreamFactory application is to use docker-compo
 ## 4) Start containers
 `docker-compose up -d`
 
+    NOTE: volume df-storage:/opt/dreamfactory/storage is created to store all file based (apps, logs etc.) data from DreamFactory.
+    This basically stores all data written by DreamFactory (at /opt/dreamfactory/storage location) in the df-storage volume. This 
+    way if you delete your DreamFactory container your data will persist as long as you don't delete the df-storage volume.
+    
+    to stop and remove all containers you can use the command 
+    
+        docker-compose down
+    
+    to stop and remove all containers including volumes use 
+    
+        docker-compose down -v
+    
 ## 5) Add an entry to /etc/hosts
 `127.0.0.1 dreamfactory.app`
 
@@ -92,6 +104,18 @@ The easiest way to configure the DreamFactory application is to use docker-compo
 
 ## 4) Start containers
 `docker-compose up -d`
+
+    NOTE: volume df-storage:/opt/dreamfactory/storage is created to store all file based (apps, logs etc.) data from DreamFactory.
+    This basically stores all data written by DreamFactory (at /opt/dreamfactory/storage location) in the df-storage volume. This 
+    way if you delete your DreamFactory container your data will persist as long as you don't delete the df-storage volume.
+    
+    to stop and remove all containers you can use the command 
+    
+        docker-compose down
+    
+    to stop and remove all containers including volumes use 
+    
+        docker-compose down -v
 
 This will create 4 containers. Mysql, Redis, DreamFactory, and Load Balancer container. 
 
