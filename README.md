@@ -1,5 +1,26 @@
 # df-docker
-Docker container for DreamFactory 2.4.2
+Docker container for DreamFactory 2.4.2 using Ubuntu 16.04, PHP 7.1 and NGINX. This container includes following PHP extensions.
+
+    calendar    cassandra   Core
+    couchbase   ctype       curl
+    date        dom         exif
+    fileinfo    filter      ftp
+    gettext     hash        iconv
+    json        ldap        libxml
+    mbstring    mcrypt      mongodb
+    mysqli      mysqlnd     openssl
+    pcntl       pcre        pcs
+    PDO         pdo_dblib   pdo_mysql
+    pdo_pgsql   pdo_sqlite  pgsql
+    Phar        posix       readline
+    Reflection  session     shmop   
+    SimpleXML   soap        sockets
+    SPL         sqlite3     standard    
+    sysvmsg     sysvsem     sysvshm
+    tokenizer   v8js        wddx
+    xml         xmlreader   xmlwriter
+    xsl         zip         Zend OPcache
+    zlib
 
 # Prerequisites
 
@@ -14,21 +35,16 @@ Docker container for DreamFactory 2.4.2
 
 # Configuration method 1 (use Docker Hub Image)
 
-## 1) Clone the df-docker repo
-`cd ~/repos` (or wherever you want the clone of the repo to be)  
-`git clone https://github.com/dreamfactorysoftware/df-docker.git`  
-`cd df-docker`
-
-## 2) Pull DreamFactory image
+## 1) Pull DreamFactory image
 `docker pull dreamfactorysoftware/df-docker`
 
-## 3) Ensure that the database container is created and running
+## 2) Ensure that the database container is created and running
 `docker run -d --name df-mysql -e "MYSQL_ROOT_PASSWORD=root" -e "MYSQL_DATABASE=dreamfactory" -e "MYSQL_USER=df_admin" -e "MYSQL_PASSWORD=df_admin" mysql`
 
-## 4) Ensure that the redis container is created and running
+## 3) Ensure that the redis container is created and running
 `docker run -d --name df-redis redis`
 
-## 5) Start the dreamfactorysoftware/df-docker container with linked MySQL and Redis server 
+## 4) Start the dreamfactorysoftware/df-docker container with linked MySQL and Redis server 
 If your database and redis runs inside another container you can simply link it under the name `db` and `rd` respectively. 
   
 `docker run -d --name df-web -p 127.0.0.1:80:80 -e "DB_HOST=db" -e "DB_USERNAME=df_admin" -e "DB_PASSWORD=df_admin" -e "DB_DATABASE=dreamfactory" -e "REDIS_HOST=rd" -e "REDIS_DATABASE=0" -e "REDIS_PORT=6379" --link df-mysql:db --link df-redis:rd dreamfactorysoftware/df-docker`
@@ -39,7 +55,7 @@ If your database and redis runs inside another container you can simply link it 
 ## 7) Access the app
 Go to 127.0.0.1 in your browser. It will take some time the first time. You will be asked to create your first admin user.
 
-# Configuration method 2 (use docker-compose)
+# Configuration method 2a (use docker-compose)
 The easiest way to configure the DreamFactory application is to use docker-compose.
 
 ## 1) Clone the df-docker repo
@@ -60,6 +76,35 @@ The easiest way to configure the DreamFactory application is to use docker-compo
 
 ## 6) Access the app
 Go to 127.0.0.1 in your browser. It will take some time the first time. You will be asked to create your first admin user.
+
+# Configuration method 2b (use docker-compose with load balancing)
+The easiest way to configure the DreamFactory application is to use docker-compose.
+
+## 1) Clone the df-docker repo
+`cd ~/repos` (or wherever you want the clone of the repo to be)  
+`git clone https://github.com/dreamfactorysoftware/df-docker.git`  
+`cd df-docker`
+
+## 2) Rename `docker-compose.yml-load-balance` to `docker-compose.yml`. Recommend backing up original `docker-compose.yml` first.
+
+## 3) Build images
+`docker-compose build`
+
+## 4) Start containers
+`docker-compose up -d`
+
+This will create 4 containers. Mysql, Redis, DreamFactory, and Load Balancer container. 
+
+## 5) Add an entry to /etc/hosts
+`127.0.0.1 dreamfactory.app`
+
+## 6) Access the app
+Go to 127.0.0.1 in your browser. It will take some time the first time. You will be asked to create your first admin user.
+
+## 7) Add additional web (DreamFactory) containers
+`docker-compose scale web=3`
+
+This will add two more DreamFactory container. Now the load balancer is going to balance load in a round-robin fashion among these three DreamFactory containers.
 
 # Configuration method 3 (build your own)
 If you don't want to use docker-compose you can build the images yourself.
@@ -91,7 +136,7 @@ Go to 127.0.0.1 in your browser. It will take some time the first time. You will
 
 # Notes
 - You may have to use `sudo` for Docker commands depending on your setup.
-- By default, the container only sends apache error logs to STDOUT. If you also want to have dreamfactory.log, e.g. for forwarding via docker logging driver
+- By default, the container only sends nginx error logs to STDOUT. If you also want to have dreamfactory.log, e.g. for forwarding via docker logging driver
 you can set environment variable `LOG_TO_STDOUT=true`
 
 # Configuration method 4 (build your own for IBM Bluemix)
@@ -158,6 +203,7 @@ container.  See the previous entry on how to view the values in VCAP SERVICES.
 |Option|Description| required? |default
 |------|-----------|---|---|
 |SERVERNAME|Domain for DF|no|dreamfactory.app
+|DB_DRIVER|Database Driver (mysql,pgsql,sqlsrv,sqlite)|no|mysql when any DB_HOST supplied. Otherwise sqlite
 |DB_HOST|Database Host|no|localhost
 |DB_USERNAME|Database User|no|df_admin
 |DB_PASSWORD|Database Password|no|df_admin
