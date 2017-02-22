@@ -46,6 +46,8 @@ RUN dpkg -i libuv-dev_1.8.0-1_amd64.deb
 RUN dpkg -i cassandra-cpp-driver_2.4.2-1_amd64.deb
 RUN dpkg -i cassandra-cpp-driver-dev_2.4.2-1_amd64.deb
 RUN git clone https://github.com/datastax/php-driver.git
+WORKDIR /cassandra/php-driver
+RUN git checkout tags/v1.2.1
 WORKDIR /cassandra/php-driver/ext
 RUN phpize
 RUN ./configure
