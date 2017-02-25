@@ -63,6 +63,18 @@ else
   fi
 fi
 
+# do we have first user provided in evn?
+if [ -n "$ADMIN_EMAIL" ] && [ -n "$ADMIN_PASSWORD" ]; then
+    echo "Setting up database and creating first admin user"
+    if [ -n "$ADMIN_FIRST_NAME" ] && [ -n "$ADMIN_LAST_NAME" ]; then
+        php artisan df:setup --admin_email $ADMIN_EMAIL --admin_password $ADMIN_PASSWORD --admin_first_name $ADMIN_FIRST_NAME --admin_last_name $ADMIN_LAST_NAME
+    else
+        php artisan df:setup --admin_email $ADMIN_EMAIL --admin_password $ADMIN_PASSWORD
+    fi
+    chown -R www-data:www-data storage/
+    chown -R www-data:www-data bootstrap/cache/
+fi
+
 # do we have configs for Session management ?
 jwt_vars=("JWT_TTL" "JWT_REFRESH_TTL" "ALLOW_FOREVER_SESSIONS")
 for var in "${jwt_vars[@]}"
