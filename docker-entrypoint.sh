@@ -38,7 +38,7 @@ fi
 # do we have configs for an external DB ?
 if [ -n "$DB_HOST" ]; then
   echo "Setting DB_HOST, DB_USERNAME, DB_PASSWORD, and DB_DATABASE"
-  sed -i "s/DB_DRIVER=sqlite/DB_DRIVER=mysql/" .env
+  sed -i "s/DB_CONNECTION=sqlite/DB_CONNECTION=mysql/" .env
   sed -i "s/DB_HOST=localhost/DB_HOST=$DB_HOST/" .env
   sed -i "s/DB_USERNAME=df_admin/DB_USERNAME=$DB_USERNAME/" .env
   sed -i "s/DB_PASSWORD=df_admin/DB_PASSWORD=$DB_PASSWORD/" .env
@@ -47,7 +47,7 @@ fi
 
 if [ -n "$DB_DRIVER" ]; then
   echo "Setting DB_DRIVER"
-  sed -i "s/DB_DRIVER=sqlite/DB_DRIVER=$DB_DRIVER/" .env
+  sed -i "s/DB_CONNECTION=sqlite/DB_CONNECTION=$DB_DRIVER/" .env
 fi
 
 # do we have an existing APP_KEY we should reuse ?
