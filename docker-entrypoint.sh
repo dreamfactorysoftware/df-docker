@@ -76,10 +76,10 @@ if [ -n "$ADMIN_EMAIL" ] && [ -n "$ADMIN_PASSWORD" ]; then
 
         if [[ "$output" != *"SQLSTATE[HY000]"* ]]; then
             lastExitCode=0
+        else
+            echo "Database connection failed. Wait 5 seconds and retry..."
+            sleep 5s
         fi
-
-        echo "Database connection failed. Wait 5 seconds and retry..."
-        sleep 5s
     done;
 
     echo "$output"
