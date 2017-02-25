@@ -71,9 +71,10 @@ if [ -n "$ADMIN_EMAIL" ] && [ -n "$ADMIN_PASSWORD" ]; then
     else
         php artisan df:setup --admin_email $ADMIN_EMAIL --admin_password $ADMIN_PASSWORD
     fi
-    chown -R www-data:www-data storage/
-    chown -R www-data:www-data bootstrap/cache/
 fi
+
+chown -R www-data:www-data storage/
+chown -R www-data:www-data bootstrap/cache/
 
 # do we have configs for Session management ?
 jwt_vars=("JWT_TTL" "JWT_REFRESH_TTL" "ALLOW_FOREVER_SESSIONS")
