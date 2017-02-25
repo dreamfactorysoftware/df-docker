@@ -71,6 +71,12 @@ if [ -n "$ADMIN_EMAIL" ] && [ -n "$ADMIN_PASSWORD" ]; then
     else
         php artisan df:setup --admin_email $ADMIN_EMAIL --admin_password $ADMIN_PASSWORD
     fi
+
+    if [ "$DB_DRIVER" != "sqlite" ]; then
+        # wait to make sure db container is up and running before proceeding with migration
+        echo "Waiting to make sure database and cache containers are up and running."
+        sleep 10s
+    fi
 fi
 
 chown -R www-data:www-data storage/
