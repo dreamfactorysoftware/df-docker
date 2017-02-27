@@ -83,6 +83,12 @@ if [ -n "$ADMIN_EMAIL" ] && [ -n "$ADMIN_PASSWORD" ]; then
     done;
 
     echo "$output"
+
+    # Do we have a package to import?
+    if [ -n "$PACKAGE" ]; then
+      echo "Importing package $PACKAGE"
+      php artisan df:import-pkg $PACKAGE --delete
+    fi
 fi
 
 chown -R www-data:www-data storage/

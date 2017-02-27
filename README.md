@@ -243,3 +243,4 @@ container.  See the previous entry on how to view the values in VCAP SERVICES.
 |LOG_TO_STDOUT|Forward log to STDOUT|no|*not forwarded*
 |SSMTP_mailhub|MX for mailing|yes if DF should mail|*no mailing capabilities*
 |SSMTP_XXXX|prefix options with SSMTP_|no|see the [man page](http://manpages.ubuntu.com/manpages/trusty/man5/ssmtp.conf.5.html)
+|PACKAGE|Path of the package file to import|no|false
