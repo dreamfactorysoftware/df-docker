@@ -102,7 +102,7 @@ WORKDIR /opt/dreamfactory
 RUN git checkout tags/2.5.0
 
 # install packages
-RUN composer update --no-dev
+RUN composer install --no-dev
 
 RUN php artisan df:setup --no-app-key --db_connection=sqlite --df_install=Docker
 
