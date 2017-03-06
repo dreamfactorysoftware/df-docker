@@ -1,5 +1,5 @@
 # df-docker
-Docker container for DreamFactory 2.4.2 using Ubuntu 16.04, PHP 7.1 and NGINX. This container includes following PHP extensions.
+Docker container for DreamFactory 2.4.0 using Ubuntu 16.04, PHP 7.1 and NGINX. This container includes following PHP extensions.
 
     calendar    cassandra   Core
     couchbase   ctype       curl
