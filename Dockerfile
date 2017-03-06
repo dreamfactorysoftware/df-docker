@@ -99,7 +99,6 @@ RUN ln -s /etc/nginx/sites-available/dreamfactory.conf /etc/nginx/sites-enabled/
 RUN git clone https://github.com/dreamfactorysoftware/dreamfactory.git /opt/dreamfactory
 
 WORKDIR /opt/dreamfactory
-RUN git checkout develop
 
 # install packages
 RUN composer update --no-dev
