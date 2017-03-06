@@ -101,7 +101,7 @@ RUN git clone https://github.com/dreamfactorysoftware/dreamfactory.git /opt/drea
 WORKDIR /opt/dreamfactory
 
 # install packages
-RUN composer update --no-dev
+RUN composer install --no-dev
 
 RUN php artisan df:setup --no-app-key --db_connection=sqlite --df_install=Docker
 
