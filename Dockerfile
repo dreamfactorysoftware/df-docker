@@ -101,9 +101,9 @@ RUN git clone https://github.com/dreamfactorysoftware/dreamfactory.git /opt/drea
 WORKDIR /opt/dreamfactory
 
 # install packages
-RUN composer install --no-dev
+RUN composer update --no-dev
 
-RUN php artisan dreamfactory:setup --no-app-key --db_driver=sqlite --df_install=Docker
+RUN php artisan df:setup --no-app-key --db_connection=sqlite --df_install=Docker
 
 # Comment out the line above and uncomment these this line if you're building a docker image for Bluemix.  If you're
 # not using redis for your cache, change the value of --cache_driver to memcached or remove it for the standard

@@ -38,7 +38,7 @@ fi
 # do we have configs for an external DB ?
 if [ -n "$DB_HOST" ]; then
   echo "Setting DB_HOST, DB_USERNAME, DB_PASSWORD, and DB_DATABASE"
-  sed -i "s/DB_DRIVER=sqlite/DB_DRIVER=mysql/" .env
+  sed -i "s/DB_CONNECTION=sqlite/DB_CONNECTION=mysql/" .env
   sed -i "s/DB_HOST=localhost/DB_HOST=$DB_HOST/" .env
   sed -i "s/DB_USERNAME=df_admin/DB_USERNAME=$DB_USERNAME/" .env
   sed -i "s/DB_PASSWORD=df_admin/DB_PASSWORD=$DB_PASSWORD/" .env
@@ -47,7 +47,7 @@ fi
 
 if [ -n "$DB_DRIVER" ]; then
   echo "Setting DB_DRIVER"
-  sed -i "s/DB_DRIVER=sqlite/DB_DRIVER=$DB_DRIVER/" .env
+  sed -i "s/DB_CONNECTION=sqlite/DB_CONNECTION=$DB_DRIVER/" .env
 fi
 
 # do we have an existing APP_KEY we should reuse ?
@@ -62,6 +62,37 @@ else
     touch .first_run_done
   fi
 fi
+
+# do we have first user provided in evn?
+if [ -n "$ADMIN_EMAIL" ] && [ -n "$ADMIN_PASSWORD" ]; then
+    lastExitCode=1
+    echo "Setting up database and creating first admin user"
+    while [ "$lastExitCode" != 0 ] ; do
+        if [ -n "$ADMIN_FIRST_NAME" ] && [ -n "$ADMIN_LAST_NAME" ]; then
+            output=$(php artisan df:setup --admin_email $ADMIN_EMAIL --admin_password $ADMIN_PASSWORD --admin_first_name $ADMIN_FIRST_NAME --admin_last_name $ADMIN_LAST_NAME)
+        else
+            output=$(php artisan df:setup --admin_email $ADMIN_EMAIL --admin_password $ADMIN_PASSWORD)
+        fi
+
+        if [[ "$output" != *"SQLSTATE[HY000]"* ]]; then
+            lastExitCode=0
+        else
+            echo "Database connection failed. Wait 5 seconds and retry..."
+            sleep 5s
+        fi
+    done;
+
+    echo "$output"
+
+    # Do we have a package to import?
+    if [ -n "$PACKAGE" ]; then
+      echo "Importing package $PACKAGE"
+      php artisan df:import-pkg $PACKAGE --delete
+    fi
+fi
+
+chown -R www-data:www-data storage/
+chown -R www-data:www-data bootstrap/cache/
 
 # do we have configs for Session management ?
 jwt_vars=("JWT_TTL" "JWT_REFRESH_TTL" "ALLOW_FOREVER_SESSIONS")
