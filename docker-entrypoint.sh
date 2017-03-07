@@ -63,6 +63,12 @@ else
   fi
 fi
 
+if [ -n "$LICENSE" ] && [ -f "/opt/dreamfactory/license/$LICENSE/composer.lock" ]; then
+    echo "Installing $LICENSE packages..."
+    cp /opt/dreamfactory/license/"$LICENSE"/composer.* /opt/dreamfactory
+    composer install --no-dev
+fi
+
 # do we have first user provided in evn?
 if [ -n "$ADMIN_EMAIL" ] && [ -n "$ADMIN_PASSWORD" ]; then
     lastExitCode=1
