@@ -232,6 +232,7 @@ container.  See the previous entry on how to view the values in VCAP SERVICES.
 |DB_USERNAME|Database User|no|df_admin
 |DB_PASSWORD|Database Password|no|df_admin
 |DB_DATABASE|Database Name|no|dreamfactory
+|DB_PORT|Database Port|no|3306
 |REDIS_HOST|Redis Cache Host|no|*uses file caching*
 |REDIS_DATABASE|Redis DB|only if REDIS_HOST set
 |REDIS_PORT|Redis Port|no|6379

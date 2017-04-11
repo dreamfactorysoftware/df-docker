@@ -35,6 +35,11 @@ if [ -n "$REDIS_PASSWORD" ]; then
   sed -i "s/#REDIS_PASSWORD=/REDIS_PASSWORD=$REDIS_PASSWORD/" .env
 fi
 
+if [ -n "$DB_DRIVER" ]; then
+  echo "Setting DB_DRIVER"
+  sed -i "s/DB_CONNECTION=sqlite/DB_CONNECTION=$DB_DRIVER/" .env
+fi
+
 # do we have configs for an external DB ?
 if [ -n "$DB_HOST" ]; then
   echo "Setting DB_HOST, DB_USERNAME, DB_PASSWORD, and DB_DATABASE"
@@ -45,9 +50,9 @@ if [ -n "$DB_HOST" ]; then
   sed -i "s/DB_DATABASE=dreamfactory/DB_DATABASE=$DB_DATABASE/" .env
 fi
 
-if [ -n "$DB_DRIVER" ]; then
-  echo "Setting DB_DRIVER"
-  sed -i "s/DB_CONNECTION=sqlite/DB_CONNECTION=$DB_DRIVER/" .env
+if [ -n "$DB_PORT" ]; then
+  echo "Setting DB_PORT"
+  sed -i "s/DB_PORT=3306/DB_PORT=$DB_PORT/" .env
 fi
 
 # do we have an existing APP_KEY we should reuse ?
