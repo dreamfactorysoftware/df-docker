@@ -9,12 +9,14 @@ RUN apt-get install -y software-properties-common
 RUN add-apt-repository ppa:ondrej/php -y
 RUN apt-get update && apt-get install -y --allow-unauthenticated\
     git-core curl nginx php7.1-fpm php7.1-common php7.1-cli php7.1-curl php7.1-json php7.1-mcrypt php7.1-mysqlnd php7.1-pgsql php7.1-sqlite \
-    php-pear php7.1-dev php7.1-ldap php7.1-sybase php7.1-mbstring php7.1-zip php7.1-soap openssl pkg-config python nodejs python-pip zip ssmtp wget
+    php-pear php7.1-dev php7.1-ldap php7.1-sybase php7.1-interbase php7.1-mbstring php7.1-zip php7.1-soap openssl pkg-config python nodejs python-pip zip ssmtp wget
 
 RUN ln -s /usr/bin/nodejs /usr/bin/node
 
 RUN pip install bunch
-
+RUN pecl install igbinary && \
+    echo "extension=igbinary.so" > /etc/php/7.1/mods-available/igbinary.ini && \
+    phpenmod igbinary
 RUN pecl install mongodb && \
     echo "extension=mongodb.so" > /etc/php/7.1/mods-available/mongodb.ini && \
     phpenmod mongodb
@@ -64,12 +66,12 @@ WORKDIR /couchbase
 RUN wget http://packages.couchbase.com/releases/couchbase-release/couchbase-release-1.0-2-amd64.deb
 RUN dpkg -i couchbase-release-1.0-2-amd64.deb
 RUN apt-get update -y
-RUN apt-get install -y --allow-unauthenticated libcouchbase-dev build-essential
-RUN pecl install pcs-1.3.1
+RUN apt-get install -y --allow-unauthenticated libcouchbase-dev build-essential zlib1g-dev
+RUN pecl install pcs-1.3.3
 RUN pecl install couchbase
 RUN echo "extension=pcs.so" > /etc/php/7.1/mods-available/pcs.ini
-RUN echo "extension=couchbase.so" > /etc/php/7.1/mods-available/couchbase.ini
-RUN phpenmod pcs && phpenmod couchbase
+RUN echo "extension=couchbase.so" > /etc/php/7.1/mods-available/xcouchbase.ini
+RUN phpenmod pcs && phpenmod xcouchbase
 WORKDIR /
 RUN rm -Rf couchbase
 
