@@ -50,7 +50,7 @@ if [ -n "$DB_HOST" ]; then
   sed -i "s/DB_DATABASE=dreamfactory/DB_DATABASE=$DB_DATABASE/" .env
 fi
 
-if [ -n "$DB_PORT" ]; then
+if [ -n "$DB_PORT" ] && [[ $DB_PORT != *":"* ]]; then
   echo "Setting DB_PORT"
   sed -i "s/DB_PORT=3306/DB_PORT=$DB_PORT/" .env
 fi
