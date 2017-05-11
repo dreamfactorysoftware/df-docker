@@ -6,7 +6,7 @@ ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update -y
 RUN apt-get install -y software-properties-common
-RUN add-apt-repository ppa:ondrej/php -y
+RUN LANG=C.UTF-8 add-apt-repository ppa:ondrej/php -y
 RUN apt-get update && apt-get install -y --allow-unauthenticated\
     git-core curl nginx php7.1-fpm php7.1-common php7.1-cli php7.1-curl php7.1-json php7.1-mcrypt php7.1-mysqlnd php7.1-pgsql php7.1-sqlite \
     php-pear php7.1-dev php7.1-ldap php7.1-sybase php7.1-interbase php7.1-mbstring php7.1-zip php7.1-soap openssl pkg-config python nodejs python-pip zip ssmtp wget
