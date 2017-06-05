@@ -7,9 +7,13 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update -y
 RUN apt-get install -y software-properties-common
 RUN LANG=C.UTF-8 add-apt-repository ppa:ondrej/php -y
-RUN apt-get update && apt-get install -y --allow-unauthenticated\
+RUN apt-get update && apt-get install -y --allow-unauthenticated apt-transport-https vim\
     git-core curl nginx php7.1-fpm php7.1-common php7.1-cli php7.1-curl php7.1-json php7.1-mcrypt php7.1-mysqlnd php7.1-pgsql php7.1-sqlite \
-    php-pear php7.1-dev php7.1-ldap php7.1-sybase php7.1-interbase php7.1-mbstring php7.1-zip php7.1-soap openssl pkg-config python nodejs python-pip zip ssmtp wget
+    php-pear php7.1-dev php7.1-ldap php7.1-interbase php7.1-mbstring php7.1-zip php7.1-soap openssl pkg-config python nodejs python-pip zip ssmtp wget
+
+RUN apt-get install -y --allow-unauthenticated locales
+RUN echo "en_US.UTF-8 UTF-8" > /etc/locale.gen
+RUN locale-gen
 
 RUN ln -s /usr/bin/nodejs /usr/bin/node
 
@@ -21,6 +25,23 @@ RUN pecl install mongodb && \
     echo "extension=mongodb.so" > /etc/php/7.1/mods-available/mongodb.ini && \
     phpenmod mongodb
 
+# install php sqlsrv driver
+RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
+RUN curl https://packages.microsoft.com/config/ubuntu/16.04/prod.list > /etc/apt/sources.list.d/mssql-release.list
+RUN apt-get update -y
+RUN ACCEPT_EULA=Y apt-get install -y --allow-unauthenticated msodbcsql mssql-tools
+RUN apt-get install -y --allow-unauthenticated unixodbc-dev
+RUN echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bash_profile
+RUN echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc
+RUN /bin/bash -c "source ~/.bashrc"
+
+RUN pecl install sqlsrv pdo_sqlsrv
+RUN echo "extension=sqlsrv.so" > /etc/php/7.1/mods-available/sqlsrv.ini
+RUN echo "extension=pdo_sqlsrv.so" > /etc/php/7.1/mods-available/pdo_sqlsrv.ini
+RUN phpenmod sqlsrv
+RUN phpenmod pdo_sqlsrv
+
+# install v8js extension
 RUN git clone https://github.com/dreamfactorysoftware/v8-compiled.git /v8
 RUN mkdir /opt/v8
 WORKDIR /v8
@@ -102,6 +123,7 @@ RUN git clone https://github.com/dreamfactorysoftware/dreamfactory.git /opt/drea
 
 WORKDIR /opt/dreamfactory
 RUN git checkout develop
+COPY cc.json composer.json
 
 # install packages
 RUN composer update --no-dev
