@@ -1,150 +1,79 @@
-FROM ubuntu:xenial
+FROM oraclelinux:7.2
 
 MAINTAINER Arif Islam<arif@dreamfactory.com>
 
-ENV DEBIAN_FRONTEND noninteractive
+ARG GITHUB_TOKEN=''
+ENV container docker
 
-RUN apt-get update -y
-RUN apt-get install -y software-properties-common
-RUN LANG=C.UTF-8 add-apt-repository ppa:ondrej/php -y
-RUN apt-get update && apt-get install -y --allow-unauthenticated apt-transport-https vim\
-    git-core curl nginx php7.1-fpm php7.1-common php7.1-cli php7.1-curl php7.1-json php7.1-mcrypt php7.1-mysqlnd php7.1-pgsql php7.1-sqlite \
-    php-pear php7.1-dev php7.1-ldap php7.1-interbase php7.1-mbstring php7.1-zip php7.1-soap openssl pkg-config python nodejs python-pip zip ssmtp wget
+RUN yum update -y
+RUN yum install -y git wget
 
-RUN apt-get install -y --allow-unauthenticated locales
-RUN echo "en_US.UTF-8 UTF-8" > /etc/locale.gen
-RUN locale-gen
+RUN wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+RUN wget http://rpms.remirepo.net/enterprise/remi-release-7.rpm
+RUN rpm -Uvh remi-release-7.rpm epel-release-latest-7.noarch.rpm
+RUN yum-config-manager --enable remi-php71
+RUN yum update -y
+RUN yum install -y vim curl nginx php-fpm php-common php-xml php-devel php-pdo php-cli php-curl php-json php-mcrypt php-mysqlnd php-pgsql php-sqlite3 \
+    php-pear curl-devel zlib-devel pcre-devel php-ldap php-interbase php-mbstring php-zip php-soap openssl-devel python nodejs python-pip zip re2c ssmtp gcc-c++ \
+    gcc build-essentials composer pkgconfig
 
-RUN ln -s /usr/bin/nodejs /usr/bin/node
+RUN ln -s /opt/remi/php71/root/bin/php /usr/local/bin/php
 
-RUN pip install bunch
-RUN pecl install igbinary && \
-    echo "extension=igbinary.so" > /etc/php/7.1/mods-available/igbinary.ini && \
-    phpenmod igbinary
-RUN pecl install mongodb && \
-    echo "extension=mongodb.so" > /etc/php/7.1/mods-available/mongodb.ini && \
-    phpenmod mongodb
-
-# install php sqlsrv driver
-RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
-RUN curl https://packages.microsoft.com/config/ubuntu/16.04/prod.list > /etc/apt/sources.list.d/mssql-release.list
-RUN apt-get update -y
-RUN ACCEPT_EULA=Y apt-get install -y --allow-unauthenticated msodbcsql mssql-tools
-RUN apt-get install -y --allow-unauthenticated unixodbc-dev
+RUN curl https://packages.microsoft.com/config/rhel/7/prod.repo > /etc/yum.repos.d/mssql-release.repo
+RUN yum update -y
+RUN yum remove -y unixODBC-utf16-devel
+RUN ACCEPT_EULA=Y yum install -y msodbcsql mssql-tools
+RUN yum install -y unixODBC-devel
 RUN echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bash_profile
 RUN echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc
 RUN /bin/bash -c "source ~/.bashrc"
 
+RUN pip install bunch
+RUN pecl install igbinary
+RUN echo "extension=igbinary.so" > /etc/php.d/41-igbinary.ini
+
+RUN pecl install mongodb
+RUN echo "extension=mongodb.so" > /etc/php.d/41-mongodb.ini
+
 RUN pecl install sqlsrv pdo_sqlsrv
-RUN echo "extension=sqlsrv.so" > /etc/php/7.1/mods-available/sqlsrv.ini
-RUN echo "extension=pdo_sqlsrv.so" > /etc/php/7.1/mods-available/pdo_sqlsrv.ini
-RUN phpenmod sqlsrv
-RUN phpenmod pdo_sqlsrv
+RUN echo "extension=sqlsrv.so" > /etc/php.d/41-sqlsrv.ini
+RUN echo "extension=pdo_sqlsrv.so" > /etc/php.d/41-pdo_sqlsrv.ini
 
-# install v8js extension
-RUN git clone https://github.com/dreamfactorysoftware/v8-compiled.git /v8
-RUN mkdir /opt/v8
-WORKDIR /v8
-RUN cp -R ubuntu_16.04/PHP7.1/* /opt/v8
-RUN git clone https://github.com/phpv8/v8js.git /v8js
-WORKDIR /v8js
-RUN phpize
-RUN ./configure --with-v8js=/opt/v8
-RUN make && make install
-RUN echo "extension=v8js.so" > /etc/php/7.1/mods-available/v8js.ini
-RUN phpenmod v8js
-WORKDIR /
-RUN rm -Rf v8 && rm -Rf v8js
-
-# install php cassandra extension
-RUN mkdir /cassandra
-WORKDIR /cassandra
-RUN apt-get install -y libgmp-dev libpcre3-dev g++ make cmake libssl-dev
-RUN wget -q http://downloads.datastax.com/cpp-driver/ubuntu/16.04/dependenices/libuv/v1.8.0/libuv_1.8.0-1_amd64.deb && \
-    wget -q http://downloads.datastax.com/cpp-driver/ubuntu/16.04/dependenices/libuv/v1.8.0/libuv-dev_1.8.0-1_amd64.deb && \
-    wget -q http://downloads.datastax.com/cpp-driver/ubuntu/16.04/cassandra/v2.4.2/cassandra-cpp-driver_2.4.2-1_amd64.deb && \
-    wget -q http://downloads.datastax.com/cpp-driver/ubuntu/16.04/cassandra/v2.4.2/cassandra-cpp-driver-dev_2.4.2-1_amd64.deb
-RUN dpkg -i --force-overwrite libuv_1.8.0-1_amd64.deb
-RUN dpkg -i libuv-dev_1.8.0-1_amd64.deb
-RUN dpkg -i cassandra-cpp-driver_2.4.2-1_amd64.deb
-RUN dpkg -i cassandra-cpp-driver-dev_2.4.2-1_amd64.deb
-RUN git clone https://github.com/datastax/php-driver.git
-WORKDIR /cassandra/php-driver
-RUN git checkout tags/v1.2.1
-WORKDIR /cassandra/php-driver/ext
-RUN phpize
-RUN ./configure
-RUN make
-RUN make install
-RUN echo "extension=cassandra.so" > /etc/php/7.1/mods-available/cassandra.ini
-RUN phpenmod cassandra
-WORKDIR /
-RUN rm -Rf cassandra
-
-# install php couchbase extension
-RUN mkdir /couchbase
-WORKDIR /couchbase
-RUN wget http://packages.couchbase.com/releases/couchbase-release/couchbase-release-1.0-2-amd64.deb
-RUN dpkg -i couchbase-release-1.0-2-amd64.deb
-RUN apt-get update -y
-RUN apt-get install -y --allow-unauthenticated libcouchbase-dev build-essential zlib1g-dev
-RUN pecl install pcs-1.3.3
-RUN pecl install couchbase
-RUN echo "extension=pcs.so" > /etc/php/7.1/mods-available/pcs.ini
-RUN echo "extension=couchbase.so" > /etc/php/7.1/mods-available/xcouchbase.ini
-RUN phpenmod pcs && phpenmod xcouchbase
-WORKDIR /
-RUN rm -Rf couchbase
-
-# configure sendmail
-RUN echo 'sendmail_path = "/usr/sbin/ssmtp -t"' > /etc/php/7.1/cli/conf.d/mail.ini
-
-RUN rm -rf /var/lib/apt/lists/*
-
-# install composer
-RUN curl -sS https://getcomposer.org/installer | php && \
-    mv composer.phar /usr/local/bin/composer && \
-    chmod +x /usr/local/bin/composer
+ADD dreamfactory.conf /etc/nginx/conf.d/dreamfactory.conf
+RUN sed -i "s/pm.max_children = 50/pm.max_children = 5000/" /etc/php-fpm.d/www.conf && \
+    sed -i "s/pm.start_servers = 5/pm.start_servers = 150/" /etc/php-fpm.d/www.conf && \
+    sed -i "s/pm.min_spare_servers = 5/pm.min_spare_servers = 100/" /etc/php-fpm.d/www.conf && \
+    sed -i "s/pm.max_spare_servers = 35/pm.max_spare_servers = 200/" /etc/php-fpm.d/www.conf && \
+    sed -i "s/user = apache/user = nginx/" /etc/php-fpm.d/www.conf && \
+    sed -i "s/group = apache/group = nginx/" /etc/php-fpm.d/www.conf && \
+    sed -i "s/worker_connections 1024;/worker_connections 2048;/" /etc/nginx/nginx.conf && \
+    sed -i "s/keepalive_timeout 65;/keepalive_timeout 10;/" /etc/nginx/nginx.conf && \
+    sed -i "s/listen = 127.0.0.1:9000/listen = \/var\/run\/php-fpm\/php7.1-fpm.sock/" /etc/php-fpm.d/www.conf && \
+    sed -i "s/listen       80 default_server;/listen       8088 default_server;/" /etc/nginx/nginx.conf && \
+    sed -i "s/\[::\]:80/\[::\]:8088/" /etc/nginx/nginx.conf
 
 
-# Configure Nginx/php-fpm
-RUN rm /etc/nginx/sites-enabled/default
-ADD dreamfactory.conf /etc/nginx/sites-available/dreamfactory.conf
-RUN ln -s /etc/nginx/sites-available/dreamfactory.conf /etc/nginx/sites-enabled/dreamfactory.conf && \
-    sed -i "s/pm.max_children = 5/pm.max_children = 5000/" /etc/php/7.1/fpm/pool.d/www.conf && \
-    sed -i "s/pm.start_servers = 2/pm.start_servers = 150/" /etc/php/7.1/fpm/pool.d/www.conf && \
-    sed -i "s/pm.min_spare_servers = 1/pm.min_spare_servers = 100/" /etc/php/7.1/fpm/pool.d/www.conf && \
-    sed -i "s/pm.max_spare_servers = 3/pm.max_spare_servers = 200/" /etc/php/7.1/fpm/pool.d/www.conf && \
-    sed -i "s/worker_connections 768;/worker_connections 2048;/" /etc/nginx/nginx.conf && \
-    sed -i "s/keepalive_timeout 65;/keepalive_timeout 10;/" /etc/nginx/nginx.conf
-
-# get app src
-RUN git clone https://github.com/dreamfactorysoftware/dreamfactory.git /opt/dreamfactory
+RUN git config --global http.sslVerify false
+RUN git clone https://github.com/dreamfactorysoftware/dreamfactory /opt/dreamfactory
 
 WORKDIR /opt/dreamfactory
 RUN git checkout develop
 COPY cc.json composer.json
 
+RUN composer config github-oauth.github.com $GITHUB_TOKEN
 # install packages
 RUN composer update --no-dev
 
-RUN php artisan df:setup --no-app-key --db_connection=sqlite --df_install=Docker
+# Run setup
+RUN php artisan df:env --db_connection=sqlite --df_install=Docker
 
-# Comment out the line above and uncomment these this line if you're building a docker image for Bluemix.  If you're
-# not using redis for your cache, change the value of --cache_driver to memcached or remove it for the standard
-# file based cache.  If you're using a mysql service, change db_driver to mysql
-#RUN php artisan dreamfactory:setup --no-app-key --db_driver=pgsql --cache_driver=redis --df_install="Docker(Bluemix)"
-
-RUN chown -R www-data:www-data /opt/dreamfactory
-
+#RUN chown -R nginx:nginx /opt/dreamfactory
 ADD docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
 # forward request and error logs to docker log collector
 RUN ln -sf /dev/stderr /var/log/nginx/error.log
 
-# Uncomment this is you are building for Bluemix and will be using ElephantSQL
-#ENV BM_USE_URI=true
 
 EXPOSE 80
 

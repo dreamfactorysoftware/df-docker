@@ -15,7 +15,7 @@ done
 
 # update site configuration
 # if no servername is provided use dreamfactory.app as default
-sed -i "s;%SERVERNAME%;${SERVERNAME:=dreamfactory.app};g" /etc/nginx/sites-available/dreamfactory.conf
+sed -i "s;%SERVERNAME%;${SERVERNAME:=dreamfactory.app};g" /etc/nginx/conf.d/dreamfactory.conf
 
 # do we have configs for a Redis Cache ?
 if [ -n "$REDIS_HOST" ]; then
@@ -37,7 +37,7 @@ fi
 
 if [ -n "$DB_DRIVER" ]; then
   echo "Setting DB_DRIVER"
-  sed -i "s/#DB_CONNECTION=sqlite/DB_CONNECTION=$DB_DRIVER/" .env
+  sed -i "s/DB_CONNECTION=sqlite/DB_CONNECTION=$DB_DRIVER/" .env
 fi
 
 if [ -n "$DB_PORT" ] && [[ $DB_PORT != *":"* ]]; then
@@ -103,8 +103,8 @@ if [ -n "$ADMIN_EMAIL" ] && [ -n "$ADMIN_PASSWORD" ]; then
     fi
 fi
 
-chown -R www-data:www-data storage/
-chown -R www-data:www-data bootstrap/cache/
+chown -R nginx:nginx storage/
+chown -R nginx:nginx bootstrap/cache/
 
 # do we have configs for Session management ?
 jwt_vars=("JWT_TTL" "JWT_REFRESH_TTL" "ALLOW_FOREVER_SESSIONS")
@@ -123,7 +123,9 @@ if [ -n "$LOG_TO_STDOUT" ]; then
 fi
 
 # start php7.1-fpm
-service php7.1-fpm start
+/usr/sbin/php-fpm
+
+chown nginx:root /var/run/php-fpm/php7.1-fpm.sock
 
 # start nginx
 exec /usr/sbin/nginx -g "daemon off;"
