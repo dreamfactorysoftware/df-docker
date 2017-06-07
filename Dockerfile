@@ -57,12 +57,13 @@ RUN git config --global http.sslVerify false
 RUN git clone https://github.com/dreamfactorysoftware/dreamfactory /opt/dreamfactory
 
 WORKDIR /opt/dreamfactory
-# RUN git checkout develop
-COPY cc.json composer.json
+
+COPY composer.json composer.json
+COPY composer.lock composer.lock
 
 RUN composer config github-oauth.github.com $GITHUB_TOKEN
 # install packages
-RUN composer update --no-dev
+RUN composer install --no-dev
 
 # Run setup
 RUN php artisan df:env --db_connection=sqlite --df_install=Docker
