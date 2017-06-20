@@ -35,6 +35,11 @@ if [ -n "$REDIS_PASSWORD" ]; then
   sed -i "s/#REDIS_PASSWORD=/REDIS_PASSWORD=$REDIS_PASSWORD/" .env
 fi
 
+if [ -n "$DB_DRIVER" ]; then
+  echo "Setting DB_DRIVER"
+  sed -i "s/DB_CONNECTION=sqlite/DB_CONNECTION=$DB_DRIVER/" .env
+fi
+
 # do we have configs for an external DB ?
 if [ -n "$DB_DRIVER" ]; then
   echo "Setting DB_DRIVER"
@@ -66,6 +71,12 @@ else
     php artisan key:generate
     touch .first_run_done
   fi
+fi
+
+if [ -n "$LICENSE" ] && [ -f "/opt/dreamfactory/license/$LICENSE/composer.lock" ]; then
+    echo "Installing $LICENSE packages..."
+    cp /opt/dreamfactory/license/"$LICENSE"/composer.* /opt/dreamfactory
+    composer install --no-dev
 fi
 
 # do we have first user provided in evn?
