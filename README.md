@@ -1,4 +1,7 @@
 # df-docker
+
+# Note: This repo is no longer maintained and will be deprecated. Please refer to [DockerHub](https://hub.docker.com/r/dreamfactorysoftware/df-docker/) for the latest version.
+
 Docker container for DreamFactory 2.5.0 using Ubuntu 16.04, PHP 7.1 and NGINX. This container includes following PHP extensions.
 
     calendar    cassandra   Core
