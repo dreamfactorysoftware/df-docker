@@ -33,29 +33,7 @@ Docker container for DreamFactory 2.5.0 using Ubuntu 16.04, PHP 7.1 and NGINX. T
 ## Environment options
 - See [this table](#environment-options-1)
 
-# Configuration method 1 (use Docker Hub Image)
-
-## 1) Pull DreamFactory image
-`docker pull dreamfactorysoftware/df-docker`
-
-## 2) Ensure that the database container is created and running
-`docker run -d --name df-mysql -e "MYSQL_ROOT_PASSWORD=root" -e "MYSQL_DATABASE=dreamfactory" -e "MYSQL_USER=df_admin" -e "MYSQL_PASSWORD=df_admin" mysql`
-
-## 3) Ensure that the redis container is created and running
-`docker run -d --name df-redis redis`
-
-## 4) Start the dreamfactorysoftware/df-docker container with linked MySQL and Redis server 
-If your database and redis runs inside another container you can simply link it under the name `db` and `rd` respectively. 
-  
-`docker run -d --name df-web -p 127.0.0.1:80:80 -e "DB_HOST=db" -e "DB_USERNAME=df_admin" -e "DB_PASSWORD=df_admin" -e "DB_DATABASE=dreamfactory" -e "REDIS_HOST=rd" -e "REDIS_DATABASE=0" -e "REDIS_PORT=6379" --link df-mysql:db --link df-redis:rd dreamfactorysoftware/df-docker`
-
-## 6) Add an entry to /etc/hosts
-127.0.0.1 dreamfactory.app
-
-## 7) Access the app
-Go to 127.0.0.1 in your browser. It will take some time the first time. You will be asked to create your first admin user.
-
-# Configuration method 2a (use docker-compose)
+# Configuration method 1a (use docker-compose)
 The easiest way to configure the DreamFactory application is to use docker-compose.
 
 ## 1) Clone the df-docker repo
@@ -89,7 +67,7 @@ The easiest way to configure the DreamFactory application is to use docker-compo
 ## 6) Access the app
 Go to 127.0.0.1 in your browser. It will take some time the first time. You will be asked to create your first admin user.
 
-# Configuration method 2b (use docker-compose with load balancing)
+# Configuration method 1b (use docker-compose with load balancing)
 The easiest way to configure the DreamFactory application is to use docker-compose.
 
 ## 1) Clone the df-docker repo
@@ -130,7 +108,7 @@ Go to 127.0.0.1 in your browser. It will take some time the first time. You will
 
 This will add two more DreamFactory container. Now the load balancer is going to balance load in a round-robin fashion among these three DreamFactory containers.
 
-# Configuration method 3 (build your own)
+# Configuration method 2 (build your own)
 If you don't want to use docker-compose you can build the images yourself.
 
 ## 1) Clone the df-docker repo
@@ -233,10 +211,14 @@ container.  See the previous entry on how to view the values in VCAP SERVICES.
 |DB_PASSWORD|Database Password|no|df_admin
 |DB_DATABASE|Database Name|no|dreamfactory
 |DB_PORT|Database Port|no|3306
-|REDIS_HOST|Redis Cache Host|no|*uses file caching*
-|REDIS_DATABASE|Redis DB|only if REDIS_HOST set
-|REDIS_PORT|Redis Port|no|6379
-|REDIS_PASSWORD|Redis Password|no|*none used*
+|CACHE_DRIVER|Cache Driver (file, redis, memcached)|no|*uses file*
+|CACHE_HOST|Cache Host|no|*uses file caching*
+|CACHE_DATABASE|Redis DB|only if CACHE_DRIVER is set to redis
+|CACHE_PORT|Redis/Memcached Port|no|6379
+|CACHE_PASSWORD|Redis/Memcached Password|no|*none used*
+|CACHE_USERNAME|Memcached username|only if CACHE_DRIVER is set to memcached
+|CACHE_WEIGHT|Memcached weight|only if CACHE_DRIVER is set to memcached
+|CACHE_PERSISTENT_ID|Memcached persistent_id|only if CACHE_DRIVER is set to memcached
 |APP_KEY|Application Key|yes for immutability|*generates a key*
 |JWT_TTL|Login Token TTL|no|60
 |JWT_REFRESH_TTL|Login Token Refresh TTL|no|20160

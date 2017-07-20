@@ -39,17 +39,17 @@ RUN rm -Rf v8 && rm -Rf v8js
 RUN mkdir /cassandra
 WORKDIR /cassandra
 RUN apt-get install -y libgmp-dev libpcre3-dev g++ make cmake libssl-dev
-RUN wget -q http://downloads.datastax.com/cpp-driver/ubuntu/16.04/dependencies/libuv/v1.8.0/libuv_1.8.0-1_amd64.deb && \
-    wget -q http://downloads.datastax.com/cpp-driver/ubuntu/16.04/dependencies/libuv/v1.8.0/libuv-dev_1.8.0-1_amd64.deb && \
-    wget -q http://downloads.datastax.com/cpp-driver/ubuntu/16.04/cassandra/v2.4.2/cassandra-cpp-driver_2.4.2-1_amd64.deb && \
-    wget -q http://downloads.datastax.com/cpp-driver/ubuntu/16.04/cassandra/v2.4.2/cassandra-cpp-driver-dev_2.4.2-1_amd64.deb
-RUN dpkg -i --force-overwrite libuv_1.8.0-1_amd64.deb
-RUN dpkg -i libuv-dev_1.8.0-1_amd64.deb
-RUN dpkg -i cassandra-cpp-driver_2.4.2-1_amd64.deb
-RUN dpkg -i cassandra-cpp-driver-dev_2.4.2-1_amd64.deb
+RUN wget -q http://downloads.datastax.com/cpp-driver/ubuntu/16.04/dependencies/libuv/v1.11.0/libuv_1.11.0-1_amd64.deb && \
+    wget -q http://downloads.datastax.com/cpp-driver/ubuntu/16.04/dependencies/libuv/v1.11.0/libuv-dev_1.11.0-1_amd64.deb && \
+    wget -q http://downloads.datastax.com/cpp-driver/ubuntu/16.04/cassandra/v2.6.0/cassandra-cpp-driver_2.6.0-1_amd64.deb && \
+    wget -q http://downloads.datastax.com/cpp-driver/ubuntu/16.04/cassandra/v2.6.0/cassandra-cpp-driver-dev_2.6.0-1_amd64.deb
+RUN dpkg -i --force-overwrite libuv_1.11.0-1_amd64.deb
+RUN dpkg -i libuv-dev_1.11.0-1_amd64.deb
+RUN dpkg -i cassandra-cpp-driver_2.6.0-1_amd64.deb
+RUN dpkg -i cassandra-cpp-driver-dev_2.6.0-1_amd64.deb
 RUN git clone https://github.com/datastax/php-driver.git
 WORKDIR /cassandra/php-driver
-RUN git checkout tags/v1.2.1
+RUN git checkout tags/v1.2.2
 WORKDIR /cassandra/php-driver/ext
 RUN phpize
 RUN ./configure

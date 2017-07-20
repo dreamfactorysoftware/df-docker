@@ -14,13 +14,15 @@ services:
   web:
     environment:
       SERVERNAME: dreamfactory.local
+      DB_DRIVER: mysql
       DB_HOST: mysql
       DB_USERNAME: df_admin
       DB_PASSWORD: df_admin
       DB_DATABASE: dreamfactory
-      REDIS_HOST: redis
-      REDIS_DATABASE: 0
-      REDIS_PORT: 6379
+      CACHE_DRIVER: redis
+      CACHE_HOST: redis
+      CACHE_DATABASE: 0
+      CACHE_PORT: 6379
     volumes:
       - df-storage:/opt/dreamfactory/storage
     build: .

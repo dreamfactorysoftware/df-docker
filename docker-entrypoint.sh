@@ -17,55 +17,63 @@ done
 # if no servername is provided use dreamfactory.app as default
 sed -i "s;%SERVERNAME%;${SERVERNAME:=dreamfactory.app};g" /etc/nginx/sites-available/dreamfactory.conf
 
-# function to update the .env file
-update_env() {
-    local key=${1} && shift
-    local value=${1} && shift
-    to_find="${key}="
-    to_replace="${key}=${value}"
-    echo "Setting ${key}"
-    if grep -q "^\s*#*\s*${to_find}\s*=" ".env"; then
-        sed -i'.tmp' "s|^\s*#*\s*${to_find}\s*=.*|${to_replace}|g" ".env"
-    else
-        # append at end of file
-        echo "{$to_replace}" >> ".env"
-    fi
-}
-
-# do we have configs for a Redis Cache ?
-if [ -n "$REDIS_HOST" ]; then
-    update_env "CACHE_DRIVER" "redis"
-    update_env "CACHE_HOST" "$REDIS_HOST"
-    if [ -n "$REDIS_DATABASE" ]; then
-      update_env "CACHE_DATABASE" "$REDIS_DATABASE"
-    fi
-    if [ -n "$REDIS_PORT" ]; then
-      update_env "CACHE_PORT" "$REDIS_PORT"
-    fi
-    if [ -n "$REDIS_PASSWORD" ]; then
-      update_env "CACHE_PASSWORD" "$REDIS_PASSWORD"
-    fi
+# do we have configs for a cache ?
+if [ -n "$CACHE_DRIVER" ]; then
+  echo "Setting CACHE_DRIVER, CACHE_HOST, CACHE_DATABASE"
+  sed -i "s/#CACHE_HOST=/CACHE_HOST=$CACHE_HOST/" .env
+  sed -i "s/#CACHE_DATABASE=2/CACHE_DATABASE=$CACHE_DATABASE/" .env
+  sed -i "s/CACHE_DRIVER=file/CACHE_DRIVER=$CACHE_DRIVER/" .env
 fi
 
+if [ -n "$CACHE_PORT" ]; then
+  echo "Setting CACHE_PORT"
+  sed -i "s/#CACHE_PORT=/CACHE_PORT=$CACHE_PORT/" .env
+fi
+
+if [ -n "$CACHE_USERNAME" ]; then
+  echo "Setting CACHE_USERNAME"
+  sed -i "s/#CACHE_USERNAME=/CACHE_USERNAME=$CACHE_USERNAME/" .env
+fi
+
+if [ -n "$CACHE_WEIGHT" ]; then
+  echo "Setting CACHE_WEIGHT"
+  sed -i "s/#CACHE_WEIGHT=/CACHE_WEIGHT=$CACHE_WEIGHT/" .env
+fi
+
+if [ -n "$CACHE_PERSISTENT_ID" ]; then
+  echo "Setting CACHE_PERSISTENT_ID"
+  sed -i "s/#CACHE_PERSISTENT_ID=/CACHE_PERSISTENT_ID=$CACHE_PERSISTENT_ID/" .env
+fi
+
+if [ -n "$CACHE_PASSWORD" ]; then
+  echo "Setting CACHE_PASSWORD"
+  sed -i "s/#CACHE_PASSWORD=/CACHE_PASSWORD=$CACHE_PASSWORD/" .env
+fi
+
+# if [ -n "$DB_DRIVER" ]; then
+#   echo "Setting DB_DRIVER"
+#   sed -i "s/DB_CONNECTION=sqlite/DB_CONNECTION=$DB_DRIVER/" .env
+# fi
 
 # do we have configs for an external DB ?
 if [ -n "$DB_DRIVER" ]; then
-    update_env "DB_CONNECTION" "$DB_DRIVER"
+  echo "Setting DB_DRIVER, DB_HOST, DB_USERNAME, DB_PASSWORD, and DB_DATABASE"
+  sed -i "s/DB_CONNECTION=sqlite/DB_CONNECTION=$DB_DRIVER/" .env
+  sed -i "s/#DB_HOST=/DB_HOST=$DB_HOST/" .env
+  sed -i "s/#DB_USERNAME=/DB_USERNAME=$DB_USERNAME/" .env
+  sed -i "s/#DB_PASSWORD=/DB_PASSWORD=$DB_PASSWORD/" .env
+  sed -i "s/#DB_DATABASE=/DB_DATABASE=$DB_DATABASE/" .env
 fi
 
-if [ -n "$DB_HOST" ]; then
-    update_env "DB_HOST" "$DB_HOST"
-    update_env "DB_USERNAME" "$DB_USERNAME"
-    update_env "DB_PASSWORD" "$DB_PASSWORD"
-    update_env "DB_DATABASE" "$DB_DATABASE"
-    if [ -n "$DB_PORT" ] && [[ $DB_PORT != *":"* ]]; then
-      update_env "DB_PORT" "$DB_PORT"
-    fi
+if [ -n "$DB_PORT" ] && [[ $DB_PORT != *":"* ]]; then
+  echo "Setting DB_PORT"
+  sed -i "s/#DB_PORT=/DB_PORT=$DB_PORT/" .env
 fi
 
 # do we have an existing APP_KEY we should reuse ?
 if [ -n "$APP_KEY" ]; then
-  update_env "APP_KEY" "$APP_KEY"
+  echo "Setting APP_KEY=$APP_KEY from environment"
+  sed -i "s/APP_KEY=/APP_KEY=$APP_KEY/" .env
 else
   # generate AppKey on first run
   if [ ! -e .first_run_done ]; then
