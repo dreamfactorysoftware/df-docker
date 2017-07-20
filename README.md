@@ -141,7 +141,7 @@ Go to 127.0.0.1 in your browser. It will take some time the first time. You will
 - By default, the container only sends nginx error logs to STDOUT. If you also want to have dreamfactory.log, e.g. for forwarding via docker logging driver
 you can set environment variable `LOG_TO_STDOUT=true`
 
-# Configuration method 4 (build your own for IBM Bluemix)
+# Configuration method 3 (build your own for IBM Bluemix)
 
 ## 1) Install the IBM Containers command line interface
 IBM Bluemix has a complete set of instructions available at https://console.ng.bluemix.net/docs/containers/container_cli_ov.html#container_cli_cfic
