@@ -120,7 +120,7 @@ If you don't want to use docker-compose you can build the images yourself.
 `cd df-docker`
 
 ## 2) Build dreamfactory/v2 image
-`docker build -t dreamfactory/v2 .`  
+`docker build -t dreamfactory .`  
 
 ## 3) Ensure that the database container is created and running
 `docker run -d --name df-mysql -e "MYSQL_ROOT_PASSWORD=root" -e "MYSQL_DATABASE=dreamfactory" -e "MYSQL_USER=df_admin" -e "MYSQL_PASSWORD=df_admin" mysql`
@@ -131,7 +131,7 @@ If you don't want to use docker-compose you can build the images yourself.
 ## 5) Start the dreamfactorysoftware/df-docker container with linked MySQL and Redis server 
 If your database and redis runs inside another container you can simply link it under the name `db` and `rd` respectively. 
   
-`docker run -d --name df-web -p 127.0.0.1:80:80 -e "DB_HOST=db" -e "DB_USERNAME=df_admin" -e "DB_PASSWORD=df_admin" -e "DB_DATABASE=dreamfactory" -e "REDIS_HOST=rd" -e "REDIS_DATABASE=0" -e "REDIS_PORT=6379" --link df-mysql:db --link df-redis:rd dreamfactory/v2`
+`docker run -d --name df-web -p 80:80 -e "DB_DRIVER=mysql" -e "DB_HOST=db" -e "DB_USERNAME=df_admin" -e "DB_PASSWORD=df_admin" -e "DB_DATABASE=dreamfactory" -e "CACHE_DRIVER=redis" -e "CACHE_HOST=rd" -e "CACHE_DATABASE=0" -e "CACHE_PORT=6379" --link df-mysql:db --link df-redis:rd dreamfactory`
 
 ## 6) Add an entry to /etc/hosts
 127.0.0.1 dreamfactory.app
