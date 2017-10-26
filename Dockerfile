@@ -8,10 +8,22 @@ RUN apt-get update -y
 RUN apt-get install -y software-properties-common
 RUN LANG=C.UTF-8 add-apt-repository ppa:ondrej/php -y
 RUN apt-get update && apt-get install -y --allow-unauthenticated\
-    git-core curl nginx php7.1-fpm php7.1-common php7.1-cli php7.1-curl php7.1-json php7.1-mcrypt php7.1-mysqlnd php7.1-pgsql php7.1-sqlite \
-    php-pear php7.1-dev php7.1-ldap php7.1-sybase php7.1-interbase php7.1-mbstring php7.1-zip php7.1-soap openssl pkg-config python nodejs python-pip zip ssmtp wget
+    git-core curl mcrypt nginx php7.1-fpm php7.1-common php7.1-cli php7.1-curl php7.1-json php7.1-mcrypt php7.1-mysqlnd php7.1-pgsql php7.1-sqlite \
+    php-pear php7.1-dev php7.1-ldap php7.1-interbase php7.1-mbstring php7.1-zip php7.1-soap openssl pkg-config python nodejs python-pip zip ssmtp wget
 
 RUN ln -s /usr/bin/nodejs /usr/bin/node
+
+RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
+RUN curl https://packages.microsoft.com/config/ubuntu/16.04/prod.list > /etc/apt/sources.list.d/mssql-release.list
+RUN apt-get install -y apt-transport-https locales
+RUN echo "en_US.UTF-8 UTF-8" > /etc/locale.gen
+RUN locale-gen
+RUN apt-get update
+RUN ACCEPT_EULA=Y apt-get install -y mssql-tools unixodbc-dev
+RUN pecl install sqlsrv pdo_sqlsrv
+RUN echo "extension=sqlsrv.so" > /etc/php/7.1/mods-available/sqlsrv.ini
+RUN echo "extension=pdo_sqlsrv.so" > /etc/php/7.1/mods-available/pdo_sqlsrv.ini
+RUN phpenmod sqlsrv pdo_sqlsrv
 
 RUN pip install bunch
 RUN pecl install igbinary && \
@@ -104,7 +116,7 @@ WORKDIR /opt/dreamfactory
 RUN git checkout develop
 
 # install packages
-RUN composer install --no-dev
+RUN composer update --no-dev
 
 RUN php artisan df:env --db_connection=sqlite --df_install=Docker
 
