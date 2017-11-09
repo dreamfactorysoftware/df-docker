@@ -2,26 +2,27 @@
 
 Docker container for DreamFactory 2.x using Ubuntu 16.04, PHP 7.1 and NGINX. This container includes following PHP extensions.
 
-    calendar    cassandra       Core
-    couchbase   ctype           curl
-    date        dom             exif
-    fileinfo    filter          ftp
-    gettext     hash            iconv
-    json        ldap            libxml
-    mbstring    mcrypt          mongodb
-    mysqli      mysqlnd         openssl
-    pcntl       pcre            pcs
-    PDO         pdo_dblib       pdo_mysql
-    pdo_pgsql   pdo_sqlite      pdo_sqlsrv
-    pgsql       Phar            posix       
-    readline    Reflection      session     
-    shmop       SimpleXML       soap        
-    sockets     SPL             sqlite3     
-    sqlsrv      standard        sysvmsg     
-    sysvsem     sysvshm         tokenizer   
-    v8js        wddx            xml         
-    xmlreader   xmlwriter       xsl         
-    zip         Zend OPcache    zlib
+    calendar            cassandra           Core
+    couchbase           ctype               curl
+    date                dom                 exif
+    fileinfo            filter              ftp
+    gettext             hash                iconv
+    igbinary            interbase           json
+    ldap                libxml              mbstring
+    mcrypt              mongodb             mysqli
+    mysqlnd             openssl             pcntl
+    pcre                pcs                 PDO
+    pdo_dblib           PDO_Firebird        pdo_mysql
+    pdo_pgsql           pdo_sqlite          pdo_sqlsrv
+    pgsql               Phar                posix
+    readline            Reflection          session
+    shmop               SimpleXML           soap
+    sockets             SPL                 sqlite3
+    sqlsrv              standard            sysvmsg
+    sysvsem             sysvshm             tokenizer
+    v8js                wddx                xml
+    xmlreader           xmlwriter           xsl
+    Zend OPcache        zip                 zlib
 
 # Prerequisites
 
