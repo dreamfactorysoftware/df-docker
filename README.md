@@ -169,4 +169,30 @@ you can set environment variable `LOG_TO_STDOUT=true`
 |LOG_TO_STDOUT|Forward log to STDOUT|no|*not forwarded*
 |SSMTP_mailhub|MX for mailing|yes if DF should mail|*no mailing capabilities*
 |SSMTP_XXXX|prefix options with SSMTP_|no|see the [man page](http://manpages.ubuntu.com/manpages/trusty/man5/ssmtp.conf.5.html)
-|PACKAGE|Path of the package file to import|no|false
+|LICENSE|DreamFactory commercial license (silver, gold). Requires setting up container with volume. See below for details.|no
+|ADMIN_EMAIL|First admin user email|no
+|ADMIN_PASSWORD|First admin user password|no
+|ADMIN_FIRST_NAME|Admin user first name|no
+|ADMIN_LAST_NAME|Admin user last name|no
+
+# Deploy container with DreamFactory commercial packages (silver / gold)
+
+For this purpose we are assuming that you have already built your DreamFactory image named `dreamfactory` following instructions under the "Configuration method 2 (build your own)" section.
+
+Start your MySQL container.
+
+`docker run -d --name df-mysql -e "MYSQL_ROOT_PASSWORD=root" -e "MYSQL_DATABASE=dreamfactory" -e "MYSQL_USER=df_admin" -e "MYSQL_PASSWORD=df_admin" mysql`
+
+Start your Redis container.
+
+`docker run -d --name df-redis redis`
+
+Now, in order for DreamFactory container to install the extra commercial packages after it starts up, you will need to provide the commercial license files to the container using docker volume.
+To mount an external (host) directory inside docker container you can use the `-v` flag as part of the `docker run` command. For example: `-v /path/to/your/directory/on/host:/your/path/inside/container`.
+For DreamFactory the container path for license file must be `/opt/dreamfactory/license`. In addition to setting the volume you will need to use the `LICENSE` environment option to indicate your license (silver/gold).
+
+Here is an example command to start the DreamFactory container with gold license. Assuming your license files (provided by your sales agent) are stored in /Users/john/df-commercial.
+
+`docker run -d --name df-web -p 80:80 -e "DB_DRIVER=mysql" -e "DB_HOST=db" -e "DB_USERNAME=df_admin" -e "DB_PASSWORD=df_admin" -e "DB_DATABASE=dreamfactory" -e "CACHE_DRIVER=redis" -e "CACHE_HOST=rd" -e "CACHE_DATABASE=0" -e "CACHE_PORT=6379" -e "LICENSE=gold" -v "/Users/john/df-commercial:/opt/dreamfactory/license" --link df-mysql:db --link df-redis:rd dreamfactory`
+
+This will start up your DreamFactory container and install the commercial packages based on your license files. Give it few seconds to fully install all packages before you access your instance at 127.0.0.1 on your browser.
