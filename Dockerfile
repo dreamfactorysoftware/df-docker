@@ -110,10 +110,10 @@ RUN ln -s /etc/nginx/sites-available/dreamfactory.conf /etc/nginx/sites-enabled/
 RUN git clone https://github.com/dreamfactorysoftware/dreamfactory.git /opt/dreamfactory
 
 WORKDIR /opt/dreamfactory
-RUN git checkout develop
+RUN git checkout tags/2.10.0
 
 # install packages
-RUN composer update --no-dev && \
+RUN composer install --no-dev && \
     php artisan df:env --db_connection=sqlite --df_install=Docker && \
     chown -R www-data:www-data /opt/dreamfactory
 ADD docker-entrypoint.sh /docker-entrypoint.sh
