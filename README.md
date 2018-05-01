@@ -1,5 +1,7 @@
 # df-docker
 
+WARNING: This is an experimental project and is not officially supported by DreamFactory. Use at your own risk.
+
 Docker container for DreamFactory 2.x using Ubuntu 16.04, PHP 7.1 and NGINX. This container includes following PHP extensions.
 
     calendar            cassandra           Core
