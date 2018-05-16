@@ -2,7 +2,7 @@ FROM ubuntu:xenial
 
 MAINTAINER Arif Islam<arif@dreamfactory.com>
 
-ENV DEBIAN_FRONTEND nonintera:ctive
+ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update -y && apt-get install -y --no-install-recommends software-properties-common
 
