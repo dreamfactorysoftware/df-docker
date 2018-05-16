@@ -200,11 +200,15 @@ Here is an example command to start the DreamFactory container with gold license
 After running this process to get your container updated with your license files, you will still need to seed the added dependencies of your new license level:
 
 When prompted type 'yes'
+
 1.`cp -i /opt/dreamfactory/license/composer.json /opt/dreamfactory`
+
 2.`cp -i /opt/dreamfactory/license/composer.lock /opt/dreamfactory`
 
 With the new values in place you need to install the dependencies:
+
 Use `composer install --no-dev`  
+
 or `composer install --no-dev --ignore-platform-reqs` if you do not need/want to install Oracle Drivers
 
 Then you will need to run the normal seeding process:
