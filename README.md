@@ -199,13 +199,22 @@ Here is an example command to start the DreamFactory container with gold license
 
 After running this process to get your container updated with your license files, you will still need to seed the added dependencies of your new license level:
 
-`cp -i /opt/dreamfactory/license/composer.json /opt/dreamfactory`
-`cp -i /opt/dreamfactory/license/composer.lock /opt/dreamfactory`
+When prompted type 'yes'
+1.`cp -i /opt/dreamfactory/license/composer.json /opt/dreamfactory`
+2.`cp -i /opt/dreamfactory/license/composer.lock /opt/dreamfactory`
 
-`composer install --no-dev`  or `composer install --no-dev --ignore-platform-reqs` if you do not need/want to install Oracle Drivers
-`php artisan migrate --seed
-php artisan config:clear
-php artisan cache:clear `
+With the new values in place you need to install the dependencies:
+Use `composer install --no-dev`  
+or `composer install --no-dev --ignore-platform-reqs` if you do not need/want to install Oracle Drivers
+
+Then you will need to run the normal seeding process:
+`php artisan migrate --seed`
+
+Clear your config:
+`php artisan config:clear`
+
+Clear you cache:
+`php artisan cache:clear `
 
 This will start up your DreamFactory container and install the commercial packages based on your license files. Give it few seconds to fully install all packages before you access your instance at 127.0.0.1 on your browser.
 
