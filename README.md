@@ -124,7 +124,7 @@ If you don't want to use docker-compose you can build the images yourself.
 `docker build -t dreamfactory .`  
 
 ## 3) Ensure that the database container is created and running
-`docker run -d --name df-mysql -e "MYSQL_ROOT_PASSWORD=root" -e "MYSQL_DATABASE=dreamfactory" -e "MYSQL_USER=df_admin" -e "MYSQL_PASSWORD=df_admin" mysql`
+`docker run -d --name df-mysql -e "MYSQL_ROOT_PASSWORD=root" -e "MYSQL_DATABASE=dreamfactory" -e "MYSQL_USER=df_admin" -e "MYSQL_PASSWORD=df_admin" mysql:5.7`
 
 ## 4) Ensure that the redis container is created and running
 `docker run -d --name df-redis redis`
@@ -183,7 +183,7 @@ For this purpose we are assuming that you have already built your DreamFactory i
 
 Start your MySQL container.
 
-`docker run -d --name df-mysql -e "MYSQL_ROOT_PASSWORD=root" -e "MYSQL_DATABASE=dreamfactory" -e "MYSQL_USER=df_admin" -e "MYSQL_PASSWORD=df_admin" mysql`
+`docker run -d --name df-mysql -e "MYSQL_ROOT_PASSWORD=root" -e "MYSQL_DATABASE=dreamfactory" -e "MYSQL_USER=df_admin" -e "MYSQL_PASSWORD=df_admin" mysql:5.7`
 
 Start your Redis container.
 
