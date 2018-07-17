@@ -203,7 +203,7 @@ First things first you need to get into your container.  You can do that by this
 
 `docker exec -it <container name> /bin/bash/`
 
-Note:  if you do not know the name of your container, you can use docker ps and it will list all of your running containers.
+Note:  if you do not know the name of your container, you can use the command `docker ps` and it will list all of your running containers.
 
 this will allow you to run commands inside of the container to update your files, etc.
 
