@@ -197,6 +197,7 @@ Here is an example command to start the DreamFactory container with gold license
 
 `docker run -d --name df-web -p 80:80 -e "DB_DRIVER=mysql" -e "DB_HOST=db" -e "DB_USERNAME=df_admin" -e "DB_PASSWORD=df_admin" -e "DB_DATABASE=dreamfactory" -e "CACHE_DRIVER=redis" -e "CACHE_HOST=rd" -e "CACHE_DATABASE=0" -e "CACHE_PORT=6379" -e "LICENSE=gold" -v "/Users/john/df-commercial:/opt/dreamfactory/license" --link df-mysql:db --link df-redis:rd dreamfactory`
 
+
 Once you attached the volume, as you have in your previous sets of commands, we still need to seed the databases, etc. 
 
 First things first you need to get into your container.  You can do that by this command:
@@ -227,3 +228,4 @@ Clear you cache:
 `php artisan cache:clear `
 
 Reload your browser and you should see Gold or Silver for the license level
+
