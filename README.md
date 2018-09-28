@@ -197,13 +197,20 @@ Here is an example command to start the DreamFactory container with gold license
 
 `docker run -d --name df-web -p 80:80 -e "DB_DRIVER=mysql" -e "DB_HOST=db" -e "DB_USERNAME=df_admin" -e "DB_PASSWORD=df_admin" -e "DB_DATABASE=dreamfactory" -e "CACHE_DRIVER=redis" -e "CACHE_HOST=rd" -e "CACHE_DATABASE=0" -e "CACHE_PORT=6379" -e "LICENSE=gold" -v "/Users/john/df-commercial:/opt/dreamfactory/license" --link df-mysql:db --link df-redis:rd dreamfactory`
 
-After running this process to get your container updated with your license files, you will still need to seed the added dependencies of your new license level:
 
-When prompted type 'yes'
+Once you attached the volume, as you have in your previous sets of commands, we still need to seed the databases, etc. 
 
-1.`cp -i /opt/dreamfactory/license/composer.json /opt/dreamfactory`
+First things first you need to get into your container.  You can do that by this command:
 
-2.`cp -i /opt/dreamfactory/license/composer.lock /opt/dreamfactory`
+`docker exec -it <container name> /bin/bash/`
+
+Note:  if you do not know the name of your container, you can use the command `docker ps` and it will list all of your running containers.
+
+this will allow you to run commands inside of the container to update your files, etc.
+
+1.`cp -i /opt/dreamfactory/license/composer.json /opt/dreamfactory` - When prompted type 'yes'
+
+2.`cp -i /opt/dreamfactory/license/composer.lock /opt/dreamfactory` - When prompted type 'yes'
 
 With the new values in place you need to install the dependencies:
 
@@ -220,5 +227,5 @@ Clear your config:
 Clear you cache:
 `php artisan cache:clear `
 
-This will start up your DreamFactory container and install the commercial packages based on your license files. Give it few seconds to fully install all packages before you access your instance at 127.0.0.1 on your browser.
+Reload your browser and you should see Gold or Silver for the license level
 
