@@ -108,7 +108,7 @@ This will create 4 containers. Mysql, Redis, DreamFactory, and Load Balancer con
 Go to 127.0.0.1 in your browser. It will take some time the first time. You will be asked to create your first admin user.
 
 ## 7) Add additional web (DreamFactory) containers
-`docker-compose scale web=3`
+`docker-compose --scale web=3`
 
 This will add two more DreamFactory container. Now the load balancer is going to balance load in a round-robin fashion among these three DreamFactory containers.
 
