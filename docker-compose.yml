@@ -6,7 +6,7 @@ services:
       MYSQL_DATABASE: dreamfactory
       MYSQL_USER: df_admin
       MYSQL_PASSWORD: df_admin
-    image: mysql
+    image: mysql:5.7
 
   redis:
     image: redis
