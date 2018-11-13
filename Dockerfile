@@ -39,7 +39,9 @@ WORKDIR /v8
 RUN cp -R ubuntu_16.04/PHP7.1/* /opt/v8 && \
     git clone https://github.com/phpv8/v8js.git /v8js
 WORKDIR /v8js
-RUN phpize && \
+RUN git checkout 1.3.6 && \
+    git pull origin 1.3.6 && \
+    phpize && \
     ./configure --with-v8js=/opt/v8 && \
     make && make install && \
     echo "extension=v8js.so" > /etc/php/7.1/mods-available/v8js.ini && \
