@@ -132,6 +132,12 @@ if [ -n "$LOG_TO_STDOUT" ]; then
   tail --pid $$ -F /opt/dreamfactory/storage/logs/dreamfactory.log &
 fi
 
+if [ -n "$APP_LOG_LEVEL" ]; then
+  echo "Setting APP_LOG_LEVEL"
+  sed -i "s/#APP_LOG_LEVEL=warning/APP_LOG_LEVEL=$APP_LOG_LEVEL/" .env
+fi
+
+
 # start php7.1-fpm
 service php7.1-fpm start
 
