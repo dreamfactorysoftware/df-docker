@@ -137,6 +137,11 @@ if [ -n "$APP_LOG_LEVEL" ]; then
   sed -i "s/#APP_LOG_LEVEL=warning/APP_LOG_LEVEL=$APP_LOG_LEVEL/" .env
 fi
 
+if [ -n "$SESSION_DRIVER" ]; then
+  echo "" >> .env
+  echo "SESSION_DRIVER=$SESSION_DRIVER" >> .env
+fi
+
 
 # start php7.1-fpm
 service php7.1-fpm start
