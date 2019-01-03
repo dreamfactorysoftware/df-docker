@@ -2,7 +2,7 @@ FROM ubuntu:xenial
 
 MAINTAINER Arif Islam<arif@dreamfactory.com>
 
-ENV DEBIAN_FRONTEND nonintera:ctive
+ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update -y && apt-get install -y --no-install-recommends software-properties-common
 
@@ -10,7 +10,7 @@ RUN LANG=C.UTF-8 add-apt-repository ppa:ondrej/php -y && \
     apt-get update && apt-get install -y --no-install-recommends --allow-unauthenticated \
     git-core curl mcrypt nginx openssl python nodejs zip ssmtp wget php7.1-fpm php7.1-common \
     php7.1-cli php7.1-curl php7.1-json php7.1-mcrypt php7.1-mysqlnd php7.1-pgsql php7.1-sqlite \
-    php-pear php7.1-dev php7.1-ldap php7.1-interbase php7.1-mbstring php7.1-zip php7.1-soap php7.1-sybase
+    php-pear php7.1-dev php7.1-ldap php7.1-interbase php7.1-mbstring php7.1-bcmath php7.1-zip php7.1-soap php7.1-sybase php7.1-xml
 
 RUN apt-get install -y --allow-unauthenticated python-pip pkg-config
 
@@ -39,7 +39,9 @@ WORKDIR /v8
 RUN cp -R ubuntu_16.04/PHP7.1/* /opt/v8 && \
     git clone https://github.com/phpv8/v8js.git /v8js
 WORKDIR /v8js
-RUN phpize && \
+RUN git checkout 1.3.6 && \
+    git pull origin 1.3.6 && \
+    phpize && \
     ./configure --with-v8js=/opt/v8 && \
     make && make install && \
     echo "extension=v8js.so" > /etc/php/7.1/mods-available/v8js.ini && \
@@ -103,6 +105,7 @@ RUN ln -s /etc/nginx/sites-available/dreamfactory.conf /etc/nginx/sites-enabled/
     sed -i "s/pm.start_servers = 2/pm.start_servers = 150/" /etc/php/7.1/fpm/pool.d/www.conf && \
     sed -i "s/pm.min_spare_servers = 1/pm.min_spare_servers = 100/" /etc/php/7.1/fpm/pool.d/www.conf && \
     sed -i "s/pm.max_spare_servers = 3/pm.max_spare_servers = 200/" /etc/php/7.1/fpm/pool.d/www.conf && \
+    sed -i "s/pm = dynamic/pm = ondemand/" /etc/php/7.1/fpm/pool.d/www.conf && \
     sed -i "s/worker_connections 768;/worker_connections 2048;/" /etc/nginx/nginx.conf && \
     sed -i "s/keepalive_timeout 65;/keepalive_timeout 10;/" /etc/nginx/nginx.conf
 
@@ -113,7 +116,7 @@ WORKDIR /opt/dreamfactory
 RUN git checkout develop
 
 # install packages
-RUN composer update --no-dev && \
+RUN composer install --no-dev && \
     php artisan df:env --db_connection=sqlite --df_install=Docker && \
     chown -R www-data:www-data /opt/dreamfactory
 ADD docker-entrypoint.sh /docker-entrypoint.sh

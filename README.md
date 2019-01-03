@@ -1,5 +1,7 @@
 # df-docker
 
+WARNING: This is an experimental project and is not officially supported by DreamFactory. Use at your own risk.
+
 Docker container for DreamFactory 2.x using Ubuntu 16.04, PHP 7.1 and NGINX. This container includes following PHP extensions.
 
     calendar            cassandra           Core
@@ -106,7 +108,7 @@ This will create 4 containers. Mysql, Redis, DreamFactory, and Load Balancer con
 Go to 127.0.0.1 in your browser. It will take some time the first time. You will be asked to create your first admin user.
 
 ## 7) Add additional web (DreamFactory) containers
-`docker-compose scale web=3`
+`docker-compose --scale web=3`
 
 This will add two more DreamFactory container. Now the load balancer is going to balance load in a round-robin fashion among these three DreamFactory containers.
 
@@ -195,4 +197,35 @@ Here is an example command to start the DreamFactory container with gold license
 
 `docker run -d --name df-web -p 80:80 -e "DB_DRIVER=mysql" -e "DB_HOST=db" -e "DB_USERNAME=df_admin" -e "DB_PASSWORD=df_admin" -e "DB_DATABASE=dreamfactory" -e "CACHE_DRIVER=redis" -e "CACHE_HOST=rd" -e "CACHE_DATABASE=0" -e "CACHE_PORT=6379" -e "LICENSE=gold" -v "/Users/john/df-commercial:/opt/dreamfactory/license" --link df-mysql:db --link df-redis:rd dreamfactory`
 
-This will start up your DreamFactory container and install the commercial packages based on your license files. Give it few seconds to fully install all packages before you access your instance at 127.0.0.1 on your browser.
+
+Once you attached the volume, as you have in your previous sets of commands, we still need to seed the databases, etc. 
+
+First things first you need to get into your container.  You can do that by this command:
+
+`docker exec -it <container name> /bin/bash/`
+
+Note:  if you do not know the name of your container, you can use the command `docker ps` and it will list all of your running containers.
+
+this will allow you to run commands inside of the container to update your files, etc.
+
+1.`cp -i /opt/dreamfactory/license/composer.json /opt/dreamfactory` - When prompted type 'yes'
+
+2.`cp -i /opt/dreamfactory/license/composer.lock /opt/dreamfactory` - When prompted type 'yes'
+
+With the new values in place you need to install the dependencies:
+
+Use `composer install --no-dev`  
+
+or `composer install --no-dev --ignore-platform-reqs` if you do not need/want to install Oracle Drivers
+
+Then you will need to run the normal seeding process:
+`php artisan migrate --seed`
+
+Clear your config:
+`php artisan config:clear`
+
+Clear you cache:
+`php artisan cache:clear `
+
+Reload your browser and you should see Gold or Silver for the license level
+
