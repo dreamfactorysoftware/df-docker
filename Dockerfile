@@ -12,7 +12,7 @@ RUN LANG=C.UTF-8 add-apt-repository ppa:ondrej/php -y && \
     php7.1-cli php7.1-curl php7.1-json php7.1-mcrypt php7.1-mysqlnd php7.1-pgsql php7.1-sqlite \
     php-pear php7.1-dev php7.1-ldap php7.1-interbase php7.1-mbstring php7.1-bcmath php7.1-zip php7.1-soap php7.1-sybase php7.1-xml
 
-RUN apt-get install -y --allow-unauthenticated python-pip pkg-config
+RUN apt-get install -y --allow-unauthenticated python-pip python3-pip pkg-config
 
 RUN ln -s /usr/bin/nodejs /usr/bin/node && \
     curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
@@ -26,7 +26,7 @@ RUN ln -s /usr/bin/nodejs /usr/bin/node && \
     echo "extension=sqlsrv.so" > /etc/php/7.1/mods-available/sqlsrv.ini && \
     echo "extension=pdo_sqlsrv.so" > /etc/php/7.1/mods-available/pdo_sqlsrv.ini && \
     phpenmod sqlsrv pdo_sqlsrv && \
-    pip install bunch && \
+    pip install bunch && pip3 install munch && \
     pecl install igbinary && \
     echo "extension=igbinary.so" > /etc/php/7.1/mods-available/igbinary.ini && \
     phpenmod igbinary && \
