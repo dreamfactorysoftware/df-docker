@@ -14,7 +14,8 @@ RUN LANG=C.UTF-8 add-apt-repository ppa:ondrej/php -y && \
 
 RUN apt-get install -y --allow-unauthenticated python-pip python3-pip pkg-config
 
-RUN ln -s /usr/bin/nodejs /usr/bin/node && \
+RUN apt-get update && \
+    ln -s /usr/bin/nodejs /usr/bin/node && \
     curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
     curl https://packages.microsoft.com/config/ubuntu/16.04/prod.list > /etc/apt/sources.list.d/mssql-release.list && \
     apt-get install -y --no-install-recommends apt-transport-https locales && \
@@ -113,7 +114,7 @@ RUN ln -s /etc/nginx/sites-available/dreamfactory.conf /etc/nginx/sites-enabled/
 RUN git clone --branch 3.0-beta https://github.com/dreamfactorysoftware/dreamfactory.git /opt/dreamfactory
 
 WORKDIR /opt/dreamfactory
-RUN git checkout develop
+#RUN git checkout develop
 
 # install packages
 RUN composer install --no-dev && \
