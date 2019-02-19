@@ -17,6 +17,9 @@ done
 # if no servername is provided use dreamfactory.app as default
 sed -i "s;%SERVERNAME%;${SERVERNAME:=dreamfactory.app};g" /etc/nginx/sites-available/dreamfactory.conf
 
+# Allow Laravel to accept requests from top level reverse proxy if it is using HTTPS. "off" by default.
+sed -i "s;%HTTPS_HEADER%;${HTTPS_HEADER:=off};g" /etc/nginx/sites-available/dreamfactory.conf
+
 # do we have configs for a cache ?
 if [ -n "$CACHE_DRIVER" ]; then
   echo "Setting CACHE_DRIVER, CACHE_HOST, CACHE_DATABASE"
@@ -149,7 +152,6 @@ fi
 if [ -n "$REDIS_PORT" ]; then
   echo "REDIS_PORT=$REDIS_PORT" >> .env
 fi
-
 
 # start php7.1-fpm
 service php7.1-fpm start
