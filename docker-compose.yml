@@ -14,6 +14,7 @@ services:
   web:
     environment:
       SERVERNAME: dreamfactory.local
+#      HTTPS_HEADER: "on"
       DB_DRIVER: mysql
       DB_HOST: mysql
       DB_USERNAME: df_admin
