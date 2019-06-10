@@ -153,6 +153,11 @@ if [ -n "$REDIS_PORT" ]; then
   echo "REDIS_PORT=$REDIS_PORT" >> .env
 fi
 
+if [ -n "$DF_REGISTER_CONTACT" ]; then
+  echo "Setting DF_REGISTER_CONTACT"
+  sed -i "s/#DF_REGISTER_CONTACT=/DF_REGISTER_CONTACT=$DF_REGISTER_CONTACT/" .env
+fi
+
 # start php7.1-fpm
 service php7.1-fpm start
 
