@@ -158,6 +158,11 @@ if [ -n "$DF_REGISTER_CONTACT" ]; then
   sed -i "s/#DF_REGISTER_CONTACT=/DF_REGISTER_CONTACT=$DF_REGISTER_CONTACT/" .env
 fi
 
+if [ -n "$SENDMAIL_DEFAULT_COMMAND" ]; then
+  echo "Setting SENDMAIL_DEFAULT_COMMAND=$SENDMAIL_DEFAULT_COMMAND"
+  sed -i "s/#SENDMAIL_DEFAULT_COMMAND=.*/SENDMAIL_DEFAULT_COMMAND=\"$(echo "$SENDMAIL_DEFAULT_COMMAND" | sed 's/\//\\\//g')\"/" .env
+fi
+
 # start php7.1-fpm
 service php7.1-fpm start
 
