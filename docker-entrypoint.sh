@@ -153,6 +153,15 @@ if [ -n "$REDIS_PORT" ]; then
   echo "REDIS_PORT=$REDIS_PORT" >> .env
 fi
 
+logsdb_vars=("LOGSDB_HOST" "LOGSDB_PORT" "LOGSDB_DATABASE" "LOGSDB_USERNAME" "LOGSDB_PASSWORD")
+for var in "${logsdb_vars[@]}"
+do
+  if [ -n "${!var}" ]; then
+    echo "Setting ${var}"
+    sed -i "s/#${var}=.*/${var}=${!var}/" .env
+  fi
+done
+
 if [ -n "$DF_REGISTER_CONTACT" ]; then
   echo "Setting DF_REGISTER_CONTACT"
   sed -i "s/#DF_REGISTER_CONTACT=/DF_REGISTER_CONTACT=$DF_REGISTER_CONTACT/" .env
