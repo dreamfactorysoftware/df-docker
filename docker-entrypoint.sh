@@ -99,7 +99,7 @@ if [ -n "$ADMIN_EMAIL" ] && [ -n "$ADMIN_PASSWORD" ]; then
             output=$(php artisan df:setup --admin_email $ADMIN_EMAIL --admin_password $ADMIN_PASSWORD)
         fi
 
-        if [[ "$output" != *"SQLSTATE[HY000]"* ]]; then
+        if [[ "$output" != *"SQLSTATE[HY000]"* ]] && [[ "$output" != *"No suitable servers found"* ]]; then
             lastExitCode=0
         else
             echo "Database connection failed. Wait 5 seconds and retry..."
