@@ -172,8 +172,8 @@ if [ -n "$SENDMAIL_DEFAULT_COMMAND" ]; then
   sed -i "s/#SENDMAIL_DEFAULT_COMMAND=.*/SENDMAIL_DEFAULT_COMMAND=\"$(echo "$SENDMAIL_DEFAULT_COMMAND" | sed 's/\//\\\//g')\"/" .env
 fi
 
-# start php7.1-fpm
-service php7.1-fpm start
+# start php7.2-fpm
+service php7.2-fpm start
 
 # start nginx
 exec /usr/sbin/nginx -g "daemon off;"
