@@ -123,7 +123,8 @@ WORKDIR /opt/dreamfactory
 #RUN git checkout develop
 
 # install packages
-RUN composer install --no-dev && \
+RUN composer global require hirak/prestissimo && \
+    composer install --no-dev && \
     php artisan df:env --db_connection=sqlite --df_install=Docker && \
     chown -R www-data:www-data /opt/dreamfactory
 ADD docker-entrypoint.sh /docker-entrypoint.sh
