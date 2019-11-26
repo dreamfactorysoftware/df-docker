@@ -88,7 +88,7 @@ if [ -n "$LICENSE" ] && [ -f "/opt/dreamfactory/license/$LICENSE/composer.lock" 
     php artisan migrate --seed
 fi
 
-# do we have first user provided in evn?
+# do we have first user provided in env?
 if [ -n "$ADMIN_EMAIL" ] && [ -n "$ADMIN_PASSWORD" ]; then
     lastExitCode=1
     echo "Setting up database and creating first admin user"
@@ -174,6 +174,9 @@ fi
 
 # start php7.2-fpm
 service php7.2-fpm start
+
+# start cron service for df-scheduler
+service cron start
 
 # start nginx
 exec /usr/sbin/nginx -g "daemon off;"
