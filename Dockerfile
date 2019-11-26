@@ -124,7 +124,7 @@ WORKDIR /opt/dreamfactory
 
 # install packages
 RUN apt update && \
-    apt install -y vim npm && \
+    apt install -y vim npm cron && \
     composer global require hirak/prestissimo && \
     composer install --no-dev && \
     php artisan df:env --db_connection=sqlite --df_install=Docker && \
