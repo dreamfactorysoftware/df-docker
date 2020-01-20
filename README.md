@@ -22,9 +22,9 @@ Docker container for DreamFactory 2.x using Ubuntu 16.04, PHP 7.1 and NGINX. Thi
     sockets             SPL                 sqlite3
     sqlsrv              standard            sysvmsg
     sysvsem             sysvshm             tokenizer
-    v8js                wddx                xml
-    xmlreader           xmlwriter           xsl
-    Zend OPcache        zip                 zlib
+    xmlreader           wddx                xml
+    Zend OPcache        xmlwriter           xsl
+    zip                 zlib
 
 # Prerequisites
 
