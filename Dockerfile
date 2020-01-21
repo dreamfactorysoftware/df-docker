@@ -38,16 +38,16 @@ RUN apt-get update && \
     pecl install mongodb && \
     echo "extension=mongodb.so" > /etc/php/7.2/mods-available/mongodb.ini && \
     phpenmod mongodb && \
-    git clone https://github.com/dreamfactorysoftware/v8-compiled.git /v8 && \
+    git clone --branch=PHP7.2 https://github.com/dreamfactorysoftware/v8-compiled.git /v8 && \
     mkdir /opt/v8
 WORKDIR /v8
 # ubuntu_16.04/PHP7.1 folder is artifact after updating df-docker PHP from the 7.1 version to the 7.2 version.
 # We should find how to compile these files special for PHP version 7.2.
-RUN cp -R ubuntu_16.04/PHP7.1/* /opt/v8 && \
+RUN cp -R ubuntu_16.04/PHP7.2/* /opt/v8 && \
     git clone https://github.com/phpv8/v8js.git /v8js
 WORKDIR /v8js
-RUN git checkout 1.4.1 && \
-    git pull origin 1.4.1 && \
+RUN git checkout 2.1.0 && \
+    git pull origin 2.1.0 && \
     phpize && \
     ./configure --with-v8js=/opt/v8 && \
     make && make install && \
