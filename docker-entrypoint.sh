@@ -153,6 +153,11 @@ if [ -n "$REDIS_PORT" ]; then
   echo "REDIS_PORT=$REDIS_PORT" >> .env
 fi
 
+if [ -n "$EXTERNAL_IP" ]; then
+  echo "Setting EXTERNAL_IP"
+  sed -i "s/#EXTERNAL_IP=/EXTERNAL_IP=$EXTERNAL_IP/" .env
+fi
+
 logsdb_vars=("LOGSDB_HOST" "LOGSDB_PORT" "LOGSDB_DATABASE" "LOGSDB_USERNAME" "LOGSDB_PASSWORD" "LOGSDB_ENABLED")
 for var in "${logsdb_vars[@]}"
 do
