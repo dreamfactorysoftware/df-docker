@@ -177,6 +177,14 @@ if [ -n "$SENDMAIL_DEFAULT_COMMAND" ]; then
   sed -i "s/#SENDMAIL_DEFAULT_COMMAND=.*/SENDMAIL_DEFAULT_COMMAND=\"$(echo "$SENDMAIL_DEFAULT_COMMAND" | sed 's/\//\\\//g')\"/" .env
 fi
 
+if [[ -n "${DF_LICENSE_KEY}" ]]; then
+  license_key_size="${#DF_LICENSE_KEY}";
+  tail_part_start=$(( license_key_size - 4 ));
+  hidden_license_key="${DF_LICENSE_KEY:0:4}***${DF_LICENSE_KEY:tail_part_start:4}";
+  echo "Setting DF_LICENSE_KEY=${hidden_license_key}";
+  grep -q '^#DF_LICENSE_KEY=' .env && sed -i "s/^#DF_LICENSE_KEY=/DF_LICENSE_KEY=${DF_LICENSE_KEY}/" .env || echo "DF_LICENSE_KEY=${DF_LICENSE_KEY}" >> .env
+fi
+
 # start php7.2-fpm
 service php7.2-fpm start
 
