@@ -112,6 +112,7 @@ RUN apt update && \
     composer global require hirak/prestissimo && \
     composer install --no-dev && \
     php artisan df:env --db_connection=sqlite --df_install=Docker && \
+    npm install -g async lodash && \
     chown -R www-data:www-data /opt/dreamfactory
 ADD docker-entrypoint.sh /docker-entrypoint.sh
 # set proper permission to docker-entrypoint.sh script and forward error logs to docker log collector
