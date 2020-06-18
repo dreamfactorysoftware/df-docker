@@ -13,7 +13,7 @@ RUN ln -s /etc/nginx/sites-available/dreamfactory.conf /etc/nginx/sites-enabled/
     sed -i "s/keepalive_timeout 65;/keepalive_timeout 10;/" /etc/nginx/nginx.conf
 
 # Get DreamFactory
-RUN git clone --branch master https://github.com/dreamfactorysoftware/dreamfactory.git /opt/dreamfactory
+RUN git clone --branch 4.2.2 https://github.com/dreamfactorysoftware/dreamfactory.git /opt/dreamfactory
 
 WORKDIR /opt/dreamfactory
 
