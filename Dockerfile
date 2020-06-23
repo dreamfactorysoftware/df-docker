@@ -10,7 +10,7 @@ WORKDIR /opt/dreamfactory
 
 # Uncomment lines 12 & 22 if you would like to upgrade your environment while replacing the License Key value with your issued Key
 COPY composer.* /opt/dreamfactory/
-RUN echo "DF_LICENSE_KEY=84de3bd3f12be252f793396f348b894f" >> .env
+# RUN echo "DF_LICENSE_KEY=84de3bd3f12be252f793396f348b894f" >> .env
 
 # Install packages
 RUN composer global require hirak/prestissimo && \
