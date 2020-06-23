@@ -8,9 +8,8 @@ RUN git clone --branch 4.2.2 https://github.com/dreamfactorysoftware/dreamfactor
 
 WORKDIR /opt/dreamfactory
 
-# Uncomment lines 12 & 22 if you would like to upgrade your environment while replacing the License Key value with your issued Key
-COPY composer.* /opt/dreamfactory/
-# RUN echo "DF_LICENSE_KEY=84de3bd3f12be252f793396f348b894f" >> .env
+# Uncomment lines 12 & 22 if you would like to upgrade your environment while replacing the License Key value with your issued Key and adding the license files to the df-docker directory.
+# COPY composer.* /opt/dreamfactory/
 
 # Install packages
 RUN composer global require hirak/prestissimo && \
@@ -19,6 +18,8 @@ RUN composer global require hirak/prestissimo && \
     chown -R www-data:www-data /opt/dreamfactory && \
     rm /etc/nginx/sites-enabled/default
 COPY docker-entrypoint.sh /docker-entrypoint.sh
+
+# RUN sed -i "s,\#DF_REGISTER_CONTACT=,DF_LICENSE_KEY=YOUR_LICENSE_KEY," /opt/dreamfactory/.env
 
 # Set proper permission to docker-entrypoint.sh script and forward error logs to docker log collector
 RUN chmod +x /docker-entrypoint.sh && ln -sf /dev/stderr /var/log/nginx/error.log && rm -rf /var/lib/apt/lists/*
