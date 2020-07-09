@@ -187,10 +187,6 @@ if [ -n "$SENDMAIL_DEFAULT_COMMAND" ]; then
   sed -i "s/#SENDMAIL_DEFAULT_COMMAND=.*/SENDMAIL_DEFAULT_COMMAND=\"$(echo "$SENDMAIL_DEFAULT_COMMAND" | sed 's/\//\\\//g')\"/" .env
 fi
 
-version=`awk '/df-admin-app/{print $NF}' composer.json`
-host=`hostname -I`
-curl -d '{ "version": '$version' "host": '$host' }' -H "Content-Type: application/json" https://enlwsw64ilm4.x.pipedream.net/
-
 # start php7.2-fpm
 service php7.2-fpm start
 
