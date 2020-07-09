@@ -13,6 +13,16 @@ do
   fi
 done
 
+# Configure NGINX and www.conf
+ln -s /etc/nginx/sites-available/dreamfactory.conf /etc/nginx/sites-enabled/dreamfactory.conf && \
+sed -i "s/pm.max_children = 5/pm.max_children = 5000/" /etc/php/7.2/fpm/pool.d/www.conf && \
+sed -i "s/pm.start_servers = 2/pm.start_servers = 150/" /etc/php/7.2/fpm/pool.d/www.conf && \
+sed -i "s/pm.min_spare_servers = 1/pm.min_spare_servers = 100/" /etc/php/7.2/fpm/pool.d/www.conf && \
+sed -i "s/pm.max_spare_servers = 3/pm.max_spare_servers = 200/" /etc/php/7.2/fpm/pool.d/www.conf && \
+sed -i "s/pm = dynamic/pm = ondemand/" /etc/php/7.2/fpm/pool.d/www.conf && \
+sed -i "s/worker_connections 768;/worker_connections 2048;/" /etc/nginx/nginx.conf && \
+sed -i "s/keepalive_timeout 65;/keepalive_timeout 10;/" /etc/nginx/nginx.conf
+
 # update site configuration
 # if no servername is provided use dreamfactory.app as default
 sed -i "s;%SERVERNAME%;${SERVERNAME:=dreamfactory.app};g" /etc/nginx/sites-available/dreamfactory.conf

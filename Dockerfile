@@ -1,6 +1,10 @@
-FROM ubuntu:xenial
+FROM dreamfactorysoftware/df-base-img:php7.2
 
-MAINTAINER Arif Islam<arif@dreamfactory.com>
+# Configure Nginx
+COPY dreamfactory.conf /etc/nginx/sites-available/dreamfactory.conf
+
+# Get DreamFactory
+RUN git clone --branch 4.3.1 https://github.com/dreamfactorysoftware/dreamfactory.git /opt/dreamfactory
 
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -87,36 +91,26 @@ RUN curl -sS https://getcomposer.org/installer | php && \
     mv composer.phar /usr/local/bin/composer && \
     chmod +x /usr/local/bin/composer
 
-
-# Configure Nginx/php-fpm
-RUN rm /etc/nginx/sites-enabled/default
-ADD dreamfactory.conf /etc/nginx/sites-available/dreamfactory.conf
-RUN ln -s /etc/nginx/sites-available/dreamfactory.conf /etc/nginx/sites-enabled/dreamfactory.conf && \
-    sed -i "s/pm.max_children = 5/pm.max_children = 5000/" /etc/php/7.2/fpm/pool.d/www.conf && \
-    sed -i "s/pm.start_servers = 2/pm.start_servers = 150/" /etc/php/7.2/fpm/pool.d/www.conf && \
-    sed -i "s/pm.min_spare_servers = 1/pm.min_spare_servers = 100/" /etc/php/7.2/fpm/pool.d/www.conf && \
-    sed -i "s/pm.max_spare_servers = 3/pm.max_spare_servers = 200/" /etc/php/7.2/fpm/pool.d/www.conf && \
-    sed -i "s/pm = dynamic/pm = ondemand/" /etc/php/7.2/fpm/pool.d/www.conf && \
-    sed -i "s/worker_connections 768;/worker_connections 2048;/" /etc/nginx/nginx.conf && \
-    sed -i "s/keepalive_timeout 65;/keepalive_timeout 10;/" /etc/nginx/nginx.conf
-
-# get app src
-RUN git clone --branch master https://github.com/dreamfactorysoftware/dreamfactory.git /opt/dreamfactory
-
 WORKDIR /opt/dreamfactory
-#RUN git checkout develop
 
-# install packages
-RUN apt update && \
-    apt install -y vim npm cron && \
-    composer global require hirak/prestissimo && \
-    composer install --no-dev && \
+# Uncomment lines 12 & 22 if you would like to upgrade your environment while replacing the License Key value with your issued Key and adding the license files to the df-docker directory.
+# COPY composer.* /opt/dreamfactory/
+
+# Install packages
+RUN composer global require hirak/prestissimo && \
+    composer install --no-dev --ignore-platform-reqs && \
     php artisan df:env --db_connection=sqlite --df_install=Docker && \
-    npm install -g async lodash && \
-    chown -R www-data:www-data /opt/dreamfactory
-ADD docker-entrypoint.sh /docker-entrypoint.sh
-# set proper permission to docker-entrypoint.sh script and forward error logs to docker log collector
+    chown -R www-data:www-data /opt/dreamfactory && \
+    rm /etc/nginx/sites-enabled/default
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+
+# RUN sed -i "s,\#DF_REGISTER_CONTACT=,DF_LICENSE_KEY=YOUR_LICENSE_KEY," /opt/dreamfactory/.env
+
+# Set proper permission to docker-entrypoint.sh script and forward error logs to docker log collector
 RUN chmod +x /docker-entrypoint.sh && ln -sf /dev/stderr /var/log/nginx/error.log && rm -rf /var/lib/apt/lists/*
+
+# Clean up
+RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 EXPOSE 80
 
