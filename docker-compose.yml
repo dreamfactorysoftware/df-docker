@@ -7,7 +7,8 @@ services:
       MYSQL_USER: df_admin
       MYSQL_PASSWORD: df_admin
     image: mysql:5.7
-
+    volumes:
+      - df-mysql:/var/lib/mysql
   redis:
     image: redis
 
@@ -15,7 +16,7 @@ services:
     environment:
       SERVERNAME: dreamfactory.local
 #      HTTPS_HEADER: "on"
-
+      # APP_KEY: VALUE
       DB_DRIVER: mysql
       DB_HOST: mysql
       DB_USERNAME: df_admin
@@ -63,4 +64,6 @@ services:
 
 volumes:
   df-storage:
+    driver: local
+  df-mysql:
     driver: local
