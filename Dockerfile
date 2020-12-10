@@ -4,7 +4,7 @@ FROM dreamfactorysoftware/df-base-img:php7.2
 COPY dreamfactory.conf /etc/nginx/sites-available/dreamfactory.conf
 
 # Get DreamFactory
-RUN git clone --branch 4.3.1 https://github.com/dreamfactorysoftware/dreamfactory.git /opt/dreamfactory
+RUN git clone --branch 4.3.3 https://github.com/dreamfactorysoftware/dreamfactory.git /opt/dreamfactory
 
 WORKDIR /opt/dreamfactory
 
