@@ -1,10 +1,10 @@
-FROM dreamfactorysoftware/df-base-img:php7.2
+FROM dreamfactorysoftware/df-base-img:develop
 
 # Configure Nginx
 COPY dreamfactory.conf /etc/nginx/sites-available/dreamfactory.conf
 
 # Get DreamFactory
-RUN git clone --branch 4.3.3 https://github.com/dreamfactorysoftware/dreamfactory.git /opt/dreamfactory
+RUN git clone https://github.com/dreamfactorysoftware/dreamfactory.git /opt/dreamfactory
 
 WORKDIR /opt/dreamfactory
 
@@ -12,8 +12,7 @@ WORKDIR /opt/dreamfactory
 # COPY composer.* /opt/dreamfactory/
 
 # Install packages
-RUN composer global require hirak/prestissimo && \
-    composer install --no-dev --ignore-platform-reqs && \
+RUN composer install --no-dev --ignore-platform-reqs && \
     php artisan df:env --db_connection=sqlite --df_install=Docker && \
     chown -R www-data:www-data /opt/dreamfactory && \
     rm /etc/nginx/sites-enabled/default
