@@ -81,7 +81,7 @@ fi
 # do we have an existing APP_KEY we should reuse ?
 if [ -n "$APP_KEY" ]; then
   echo "Setting APP_KEY=$APP_KEY from environment"
-  sed -i "s/APP_KEY=.*/APP_KEY=$APP_KEY/" .env
+  sed -i "s#APP_KEY=.*#APP_KEY=$APP_KEY#" .env
 else
   # generate AppKey on first run
   if [ ! -e .first_run_done ]; then
