@@ -1,6 +1,6 @@
 # df-docker
 
-Docker container for DreamFactory 4.x using Ubuntu 16.04, PHP 7.3 and NGINX.
+Docker container for DreamFactory 4.x using Ubuntu 16.04, PHP 7.4 and NGINX.
 
 ## Prerequisites
 
