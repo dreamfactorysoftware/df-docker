@@ -1,4 +1,4 @@
-FROM dreamfactorysoftware/df-base-img:ubuntu-18
+FROM dreamfactorysoftware/df-base-img:php7.4
 
 # Configure Nginx
 COPY dreamfactory.conf /etc/nginx/sites-available/dreamfactory.conf

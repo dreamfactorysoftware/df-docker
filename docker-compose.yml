@@ -22,7 +22,6 @@ services:
       DB_USERNAME: df_admin
       DB_PASSWORD: df_admin
       DB_DATABASE: dreamfactory
-
       CACHE_DRIVER: redis
       CACHE_HOST: redis
       CACHE_DATABASE: 0
