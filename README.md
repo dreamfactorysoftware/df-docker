@@ -11,7 +11,7 @@ Docker container for DreamFactory 4.x using Ubuntu 16.04, PHP 7.4 and NGINX.
 - See [https://docs.docker.com/compose/install](https://docs.docker.com/compose/install)
 
 ### Persist MySQL Data
-Be sure to either set the APP_KEY value in the docker-compose file or you will receive "The MAC is invalid" errors within your instance.
+Be sure to set the APP_KEY value in the docker-compose file or you will receive "The MAC is invalid" errors within your instance.
  
 
 ## Configuration method docker-compose
