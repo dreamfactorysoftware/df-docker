@@ -10,8 +10,8 @@ Docker container for DreamFactory 4.x using Ubuntu 16.04, PHP 7.4 and NGINX.
 ### Get Docker Compose
 - See [https://docs.docker.com/compose/install](https://docs.docker.com/compose/install)
 
-### Persist MySQL Data
-Be sure to either set the APP_KEY value in the docker-compose file or you will receive "The MAC is invalid" errors within your instance.
+### Persisting MySQL Data
+After you have spun up your DreamFactory instance, take the APP_KEY value from the `.env` file in `/opt/dreamfactory` and then set this value as the APP_KEY value in the docker-compose.yml file (line 19) to avoid receiving "The MAC is invalid" errors within your instance should you ever need to rebuild.
  
 
 ## Configuration method docker-compose
@@ -52,9 +52,9 @@ Go to 127.0.0.1 in your browser. It will take some time the first time. You will
 
 ### 1) Add the upgraded composer files to the df-docker directory
 
-### 2) Uncomment lines 12 and 22
+### 2) Uncomment lines 12 and 21 of `Dockerfile`
 
-### 3) Add the License Key to line 22
+### 3) Add the License Key to line 21 of `Dockerfile`
 
 ### 4) Build images
 `docker-compose build`
