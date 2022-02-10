@@ -8,7 +8,7 @@ RUN git clone https://github.com/dreamfactorysoftware/dreamfactory.git /opt/drea
 
 WORKDIR /opt/dreamfactory
 
-# Uncomment lines 12 & 22 if you would like to upgrade your environment while replacing the License Key value with your issued Key and adding the license files to the df-docker directory.
+# Uncomment lines 12 & 21 if you would like to upgrade your environment while replacing the License Key value with your issued Key and adding the license files to the df-docker directory.
 # COPY composer.* /opt/dreamfactory/
 
 # Install packages
