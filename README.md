@@ -12,7 +12,6 @@ Docker container for DreamFactory 4.x using Ubuntu 16.04, PHP 7.4 and NGINX.
 
 ### Persisting MySQL Data
 After you have spun up your DreamFactory instance, take the APP_KEY value from the `.env` file in `/opt/dreamfactory` and then set this value as the APP_KEY value in the docker-compose.yml file (line 19) to avoid receiving "The MAC is invalid" errors within your instance should you ever need to rebuild.
- 
 
 ## Configuration method docker-compose
 The easiest way to configure the DreamFactory application is to use docker-compose.
