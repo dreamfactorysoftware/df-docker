@@ -9,6 +9,13 @@ services:
     image: mysql:5.7
     volumes:
       - df-mysql:/var/lib/mysql
+      
+   example_data:
+    environment:
+      DATASETS: pagila
+      POSTGRES_PASSWORD: root_pw
+    image: aa8y/postgres-dataset    
+      
   redis:
     image: redis
 
