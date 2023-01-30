@@ -10,7 +10,7 @@ services:
     volumes:
       - df-mysql:/var/lib/mysql
       
-   example_data:
+  example_data:
     environment:
       DATASETS: pagila
       POSTGRES_PASSWORD: root_pw
