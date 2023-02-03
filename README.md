@@ -92,7 +92,10 @@ Go to `127.0.0.1` in your browser. It will take some time upon building, but you
 
 <a name="persistent"></a>
 ## Persisting System Database Configs
-After you have spun up your DreamFactory instance, take the APP_KEY value from the `.env` file in `/opt/dreamfactory` and then set this value as the APP_KEY value in the docker-compose.yml file (line 19) to avoid receiving "The MAC is invalid" errors within your instance should you ever need to rebuild.
+After you have spun up your DreamFactory instance, take the APP_KEY value from the `.env` file in `/opt/dreamfactory`. This can be done with the following command:<br>
+`docker-compose exec web cat .env | grep APP_KEY`
+
+Set this value as the APP_KEY value in the docker-compose.yml file (line 19), encapsulating it in single quotes, to avoid receiving "The MAC is invalid" errors within your instance should you ever need to rebuild.
 
 <a name="testing"></a>
 ## Testing Data
