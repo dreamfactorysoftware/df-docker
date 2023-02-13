@@ -1,14 +1,16 @@
-FROM dreamfactorysoftware/df-base-img:ubuntu-20
+ARG BASE=dreamfactorysoftware/df-base-img:ubuntu-22
+FROM $BASE
 
 # Configure Nginx
 COPY dreamfactory.conf /etc/nginx/sites-available/dreamfactory.conf
 
 # Get DreamFactory
-RUN git clone https://github.com/dreamfactorysoftware/dreamfactory.git /opt/dreamfactory
+ARG BRANCH=master
+RUN git clone --branch $BRANCH https://github.com/dreamfactorysoftware/dreamfactory.git /opt/dreamfactory
 
 WORKDIR /opt/dreamfactory
 
-# Uncomment lines 12 & 21 if you would like to upgrade your environment while replacing the License Key value with your issued Key and adding the license files to the df-docker directory.
+# Uncomment lines 14 & 23 if you would like to upgrade your environment while replacing the License Key value with your issued Key and adding the license files to the df-docker directory.
 # COPY composer.* /opt/dreamfactory/
 
 # Install packages

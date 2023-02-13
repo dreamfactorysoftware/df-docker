@@ -3,7 +3,7 @@
 </h1>
 
 <p align="center">
-    Docker container for DreamFactory 4.x using Ubuntu 20.04, PHP 7.4 and NGINX.
+    Docker container for DreamFactory 5.x using Ubuntu 22.04, PHP 8.1 and NGINX.
 </p>
 
 <p align="center">
@@ -77,7 +77,7 @@ Go to `127.0.0.1` in your browser. It will take some time upon building, but you
 
 ### 1) Add the license files to the `df-docker` directory
 
-### 2) Uncomment lines 12 and 21 of `Dockerfile`
+### 2) Uncomment lines 14 and 23 of `Dockerfile`
 
 ### 3) Add the License Key to line 21 of `Dockerfile`
 
