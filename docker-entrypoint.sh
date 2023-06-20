@@ -86,11 +86,14 @@ else
   fi
 fi
 
-echo "Migration and clearning"
+if [ -n "$LICENSE" ] && [ -f "/opt/dreamfactory/license/$LICENSE/composer.lock" ]; then
+    echo "Installing $LICENSE packages..."
+    cp /opt/dreamfactory/license/"$LICENSE"/composer.* /opt/dreamfactory
+    composer install --no-dev --ignore-platform-reqs
 php artisan migrate --seed
 php artisan cache:clear
 php artisan config:clear
-
+fi
 
 # do we have first user provided in env?
 if [ -n "$ADMIN_EMAIL" ] && [ -n "$ADMIN_PASSWORD" ] && [ -n "$ADMIN_PHONE" ];  then
