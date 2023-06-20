@@ -90,9 +90,9 @@ if [ -n "$LICENSE" ] && [ -f "/opt/dreamfactory/license/$LICENSE/composer.lock" 
     echo "Installing $LICENSE packages..."
     cp /opt/dreamfactory/license/"$LICENSE"/composer.* /opt/dreamfactory
     composer install --no-dev --ignore-platform-reqs
-php artisan migrate --seed
-php artisan cache:clear
-php artisan config:clear
+    php artisan migrate --seed
+    php artisan cache:clear
+    php artisan config:clear
 fi
 
 # do we have first user provided in env?
