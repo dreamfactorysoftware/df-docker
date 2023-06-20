@@ -14,10 +14,11 @@ WORKDIR /opt/dreamfactory
 # COPY composer.* /opt/dreamfactory/
 
 # Install packages
-RUN composer install --no-dev --ignore-platform-reqs && \
+RUN composer install --no-dev && \
     php artisan df:env --db_connection=sqlite --df_install=Docker && \
     chown -R www-data:www-data /opt/dreamfactory && \
     rm /etc/nginx/sites-enabled/default
+
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 
 # RUN sed -i "s,\#DF_REGISTER_CONTACT=,DF_LICENSE_KEY=YOUR_LICENSE_KEY," /opt/dreamfactory/.env
