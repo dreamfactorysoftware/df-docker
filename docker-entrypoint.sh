@@ -5,13 +5,8 @@ set -e
 CONF=/etc/ssmtp/ssmtp.conf
 rm -f $CONF
 
-for E in $(env)
-do
-  if [ "$(echo $E | sed -e '/^SSMTP_/!d' )" ]
-  then
-    echo $E | sed -e 's/^SSMTP_//' >> $CONF
-  fi
-done
+# Filter the env variables for ssmtp configs and write them to the config file
+env | awk -F'\n' '/^SSMTP_/ { print substr($1, 7) }' > "$CONF"
 
 # Configure NGINX and www.conf
 ln -s /etc/nginx/sites-available/dreamfactory.conf /etc/nginx/sites-enabled/dreamfactory.conf && \
