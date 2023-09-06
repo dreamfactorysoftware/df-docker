@@ -82,6 +82,9 @@ else
   if [ ! -e .first_run_done ]; then
     echo "Generating APP_KEY"
     php artisan key:generate
+    php artisan migrate --seed
+    php artisan cache:clear
+    php artisan config:clear
     touch .first_run_done
   fi
 fi
