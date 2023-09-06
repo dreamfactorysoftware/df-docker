@@ -5,8 +5,14 @@ set -e
 CONF=/etc/ssmtp/ssmtp.conf
 rm -f $CONF
 
+# Check if the directory already exists.
+if [ ! -d "$CONF" ]; then
+  ### Take action if $DIR exists ###
+  mkdir /etc/ssmtp
+fi
+
 # Filter the env variables for ssmtp configs and write them to the config file
-env | awk -F'\n' '/^SSMTP_/ { print substr($1, 7) }' > "$CONF"
+env | awk -F'\n' '/^SSMTP_/ { print substr($1, 7) }' > $CONF
 
 # Configure NGINX and www.conf
 ln -s /etc/nginx/sites-available/dreamfactory.conf /etc/nginx/sites-enabled/dreamfactory.conf && \
@@ -82,9 +88,6 @@ else
   if [ ! -e .first_run_done ]; then
     echo "Generating APP_KEY"
     php artisan key:generate
-    php artisan migrate --seed
-    php artisan cache:clear
-    php artisan config:clear
     touch .first_run_done
   fi
 fi
