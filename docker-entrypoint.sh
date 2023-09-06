@@ -12,7 +12,7 @@ if [ ! -d "$CONF" ]; then
 fi
 
 # Filter the env variables for ssmtp configs and write them to the config file
-env | awk -F'\n' '/^SSMTP_/ { print substr($1, 7) }' > $CONF
+env | awk -F'\n' '/^SSMTP_/ { print substr($1, 7) }' > "$CONF"
 
 # Configure NGINX and www.conf
 ln -s /etc/nginx/sites-available/dreamfactory.conf /etc/nginx/sites-enabled/dreamfactory.conf && \
