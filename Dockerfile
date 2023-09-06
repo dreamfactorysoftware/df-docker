@@ -1,4 +1,4 @@
-ARG BASE=dreamfactorysoftware/df-base-img:ubuntu-22
+ARG BASE=dreamfactorysoftware/df-base-img:2-ubuntu-22
 FROM $BASE
 
 # Configure Nginx
@@ -14,7 +14,7 @@ WORKDIR /opt/dreamfactory
 # COPY composer.* /opt/dreamfactory/
 
 # Install packages
-RUN composer install --no-dev && \
+RUN composer install --no-dev --ignore-platform-reqs && \
     php artisan df:env --db_connection=sqlite --df_install=Docker && \
     chown -R www-data:www-data /opt/dreamfactory && \
     rm /etc/nginx/sites-enabled/default
