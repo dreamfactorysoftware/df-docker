@@ -1,4 +1,4 @@
-ARG BASE=dreamfactorysoftware/df-base-img:2-ubuntu-22
+ARG BASE=dreamfactorysoftware/df-base-img:3-ubuntu-22
 FROM $BASE
 
 # Configure Nginx
