@@ -2,17 +2,20 @@
 set -e
 
 # mail setup
-CONF=/etc/ssmtp/ssmtp.conf
+# Note the ssmptp is deprecated, and the suggested (seemingly drop in)
+# replacement is msmptp, but I'm not an expert, and there maybe some expert
+# mode that is being used / expected that I'm not aware of.
+CONF=/etc/msmtp/msmtp.conf
 rm -f $CONF
 
 # Check if the directory already exists.
 if [ ! -d "$CONF" ]; then
   ### Take action if $DIR exists ###
-  mkdir /etc/ssmtp
+  mkdir -p /etc/msmtp
 fi
 
-# Filter the env variables for ssmtp configs and write them to the config file
-env | awk -F'\n' '/^SSMTP_/ { print substr($1, 7) }' > "$CONF"
+# Filter the env variables for msmtp configs and write them to the config file
+env | awk -F'\n' '/^MSMTP_/ { print substr($1, 7) }' > "$CONF"
 
 # Configure NGINX and www.conf
 ln -s /etc/nginx/sites-available/dreamfactory.conf /etc/nginx/sites-enabled/dreamfactory.conf && \
@@ -195,11 +198,17 @@ if [ -n "$SENDMAIL_DEFAULT_COMMAND" ]; then
   sed -i "s/#SENDMAIL_DEFAULT_COMMAND=.*/SENDMAIL_DEFAULT_COMMAND=\"$(echo "$SENDMAIL_DEFAULT_COMMAND" | sed 's/\//\\\//g')\"/" .env
 fi
 
+
 # start php8.1-fpm
-service php8.1-fpm start
+/usr/sbin/php-fpm --fpm-config /etc/php/8.1/fpm/php-fpm.conf
+# And grant nginx permissions to socket that we use above.
+chgrp nginx /var/run/php-fpm.sock
+#service php8.1-fpm start
 
 # start cron service for df-scheduler
-service cron start
+#service cron start
 
 # start nginx
-exec /usr/sbin/nginx -g "daemon off;"
+exec /usr/sbin/nginx -e "/var/log/nginx/error.log" -g "daemon off;"
+
+echo "IS SOMETHING ELSE RUNNING HERE???"
