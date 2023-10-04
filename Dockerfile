@@ -1,4 +1,5 @@
-ARG BASE=cgr.dev/custom-images/request-306@sha256:6016b955a5679a5a35c7b11275056a13bc01ee644d4d0867aa3ff65d59de7e1d
+#ARG BASE=cgr.dev/custom-images/request-306@sha256:6016b955a5679a5a35c7b11275056a13bc01ee644d4d0867aa3ff65d59de7e1d
+ARG BASE=cgr.dev/dreamfactory.com/df-docker-base
 FROM $BASE
 
 # The base image runs as non-root, but we need root to chown things below
