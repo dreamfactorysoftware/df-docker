@@ -23,7 +23,7 @@ services:
     environment:
       SERVERNAME: dreamfactory.local
 #      HTTPS_HEADER: "on"
-      # APP_KEY: VALUE
+      # APP_KEY: YOUR_APP_KEY
       DB_DRIVER: mysql
       DB_HOST: mysql
       DB_USERNAME: df_admin
