@@ -2,10 +2,10 @@ version: '3'
 services:
   mysql:
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: dreamfactory
-      MYSQL_USER: df_admin
-      MYSQL_PASSWORD: df_admin
+      MYSQL_ROOT_PASSWORD: $MYSQL_ROOT_PASSWORD
+      MYSQL_DATABASE: $MYSQL_DATABASE
+      MYSQL_USER: $MYSQL_USER
+      MYSQL_PASSWORD: $MYSQL_PASSWORD
     image: mysql:5.7
     volumes:
       - df-mysql:/var/lib/mysql
@@ -13,22 +13,26 @@ services:
   example_data:
     environment:
       DATASETS: pagila
-      POSTGRES_PASSWORD: root_pw
+      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
     image: aa8y/postgres-dataset    
       
   redis:
     image: redis
 
   web:
+    depends_on:
+      - mysql
+      - redis
+
     environment:
-      SERVERNAME: dreamfactory.local
+      SERVERNAME: $SERVERNAME
 #      HTTPS_HEADER: "on"
-      # APP_KEY: VALUE
+      APP_KEY: $APP_KEY
       DB_DRIVER: mysql
-      DB_HOST: mysql
-      DB_USERNAME: df_admin
-      DB_PASSWORD: df_admin
-      DB_DATABASE: dreamfactory
+      DB_HOST: mysql # this could be dynamic
+      DB_USERNAME: $MYSQL_USER
+      DB_PASSWORD: $MYSQL_PASSWORD
+      DB_DATABASE: $MYSQL_DATABASE
       CACHE_DRIVER: redis
       CACHE_HOST: redis
       CACHE_DATABASE: 0
