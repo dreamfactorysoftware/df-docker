@@ -20,6 +20,8 @@ services:
     image: redis
 
   web:
+    depends_on:
+      - mysql
     environment:
       SERVERNAME: dreamfactory.local
 #      HTTPS_HEADER: "on"
