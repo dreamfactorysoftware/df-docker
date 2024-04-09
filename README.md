@@ -77,9 +77,9 @@ Go to `127.0.0.1` in your browser. It will take some time upon building, but you
 
 ### 1) Add the license files to the `df-docker` directory
 
-### 2) Uncomment lines 14 and 23 of `Dockerfile`
+### 2) Uncomment lines 14 and 51 of `Dockerfile`
 
-### 3) Add the License Key to line 21 of `Dockerfile`
+### 3) Add the License Key to line 51 of `Dockerfile`
 
 ### 4) Build images
 `docker-compose build`
