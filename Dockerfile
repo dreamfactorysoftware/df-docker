@@ -28,7 +28,7 @@ RUN mkdir -p $TEMP_FOLDER $DESTINATION_FOLDER
 # Download and install DreamFactory frontend
 RUN cd $TEMP_FOLDER && \
     response=$(curl -s -H "Accept: application/vnd.github.v3+json" "https://api.github.com/repos/$REPO_OWNER/releases") && \
-    latest_release=1.3.1 && \
+    latest_release=1.3.2 && \
     release_url="$REPO_URL/releases/download/$latest_release/release.zip" && \
     curl -LO "$release_url" && \
     find "$DESTINATION_FOLDER" -type f \( -name "*.js" -o -name "*.css" \) -exec rm {} \; && \
