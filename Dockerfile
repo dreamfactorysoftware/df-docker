@@ -9,13 +9,14 @@ ARG BRANCH=DP-573
 RUN git clone --branch $BRANCH https://github.com/dreamfactorysoftware/dreamfactory.git /opt/dreamfactory
 
 WORKDIR /opt/dreamfactory
+RUN cd /opt/dreamfactory && ls -al
 
 # Uncomment lines 14 & 51 if you would like to upgrade your environment while replacing the License Key value with your issued Key and adding the license files to the df-docker directory.
 # COPY composer.* /opt/dreamfactory/
 
 # Install packages
 
-RUN cd /opt/dreamfactory composer install --no-dev --ignore-platform-reqs && \
+RUN cd /opt/dreamfactory && composer install --no-dev --ignore-platform-reqs && \
     php artisan df:env --db_connection=sqlite --df_install=Docker && \
     chown -R www-data:www-data /opt/dreamfactory && \
     rm /etc/nginx/sites-enabled/default
