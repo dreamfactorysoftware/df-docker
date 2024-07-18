@@ -1,11 +1,10 @@
-ARG BASE=dreamfactorysoftware/df-base-img:v6
-FROM $BASE
+FROM base-24-83:latest
 
 # Configure Nginx
 COPY dreamfactory.conf /etc/nginx/sites-available/dreamfactory.conf
 
 # Get DreamFactory
-ARG BRANCH=master
+ARG BRANCH=shift-124321
 RUN git clone --branch $BRANCH https://github.com/dreamfactorysoftware/dreamfactory.git /opt/dreamfactory
 
 WORKDIR /opt/dreamfactory
@@ -40,7 +39,19 @@ RUN cd $TEMP_FOLDER && \
     mv dist/* "$DESTINATION_FOLDER" && \
     cd .. && rm -rf "$TEMP_FOLDER"
 
+# Set Composer to allow dev packages
+RUN composer config minimum-stability dev
+RUN composer config prefer-stable true
+
 # Install packages
+#USER www-data
+
+# Update all dependencies at once to avoid partial update issues
+RUN composer update --with-all-dependencies --no-dev --ignore-platform-req=ext-mongodb --ignore-platform-req=ext-bcmath --ignore-platform-req=ext-oci8 --ignore-platform-req=ext-gd --ignore-platform-req=ext-zip --ignore-platform-req=ext-odbc
+
+#RUN composer update dreamfactory/df-core --with-all-dependencies && \ 
+#composer update --no-dev --no-install --ignore-platform-req=ext-mongodb --ignore-platform-req=ext-bcmath --ignore-platform-req=ext-oci8  --ignore-platform-req=ext-gd --ignore-platform-req=ext-zip --ignore-platform-req=ext-odbc
+
 RUN composer install --no-dev --ignore-platform-reqs && \
     php artisan df:env --db_connection=sqlite --df_install=Docker && \
     chown -R www-data:www-data /opt/dreamfactory && \

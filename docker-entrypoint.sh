@@ -1,26 +1,13 @@
 #!/bin/bash
 set -e
 
-# mail setup
-CONF=/etc/ssmtp/ssmtp.conf
-rm -f $CONF
-
-# Check if the directory already exists.
-if [ ! -d "$CONF" ]; then
-  ### Take action if $DIR exists ###
-  mkdir /etc/ssmtp
-fi
-
-# Filter the env variables for ssmtp configs and write them to the config file
-env | awk -F'\n' '/^SSMTP_/ { print substr($1, 7) }' > "$CONF"
-
 # Configure NGINX and www.conf
 ln -s /etc/nginx/sites-available/dreamfactory.conf /etc/nginx/sites-enabled/dreamfactory.conf && \
-sed -i "s/pm.max_children = 5/pm.max_children = 5000/" /etc/php/8.1/fpm/pool.d/www.conf && \
-sed -i "s/pm.start_servers = 2/pm.start_servers = 150/" /etc/php/8.1/fpm/pool.d/www.conf && \
-sed -i "s/pm.min_spare_servers = 1/pm.min_spare_servers = 100/" /etc/php/8.1/fpm/pool.d/www.conf && \
-sed -i "s/pm.max_spare_servers = 3/pm.max_spare_servers = 200/" /etc/php/8.1/fpm/pool.d/www.conf && \
-sed -i "s/pm = dynamic/pm = ondemand/" /etc/php/8.1/fpm/pool.d/www.conf && \
+sed -i "s/pm.max_children = 5/pm.max_children = 5000/" /etc/php/8.3/fpm/pool.d/www.conf && \
+sed -i "s/pm.start_servers = 2/pm.start_servers = 150/" /etc/php/8.3/fpm/pool.d/www.conf && \
+sed -i "s/pm.min_spare_servers = 1/pm.min_spare_servers = 100/" /etc/php/8.3/fpm/pool.d/www.conf && \
+sed -i "s/pm.max_spare_servers = 3/pm.max_spare_servers = 200/" /etc/php/8.3/fpm/pool.d/www.conf && \
+sed -i "s/pm = dynamic/pm = ondemand/" /etc/php/8.3/fpm/pool.d/www.conf && \
 sed -i "s/worker_connections 768;/worker_connections 2048;/" /etc/nginx/nginx.conf && \
 sed -i "s/keepalive_timeout 65;/keepalive_timeout 10;/" /etc/nginx/nginx.conf
 
@@ -195,8 +182,8 @@ if [ -n "$SENDMAIL_DEFAULT_COMMAND" ]; then
   sed -i "s/#SENDMAIL_DEFAULT_COMMAND=.*/SENDMAIL_DEFAULT_COMMAND=\"$(echo "$SENDMAIL_DEFAULT_COMMAND" | sed 's/\//\\\//g')\"/" .env
 fi
 
-# start php8.1-fpm
-service php8.1-fpm start
+# start php8.3-fpm
+service php8.3-fpm start
 
 # start cron service for df-scheduler
 service cron start
