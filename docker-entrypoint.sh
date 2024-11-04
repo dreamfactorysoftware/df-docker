@@ -84,10 +84,13 @@ if [ -n "$APP_KEY" ]; then
   echo "Setting APP_KEY=$APP_KEY from environment"
   sed -i "s#APP_KEY=.*#APP_KEY=$APP_KEY#" .env
 else
-  # generate AppKey on first run
+  # generate AppKey and API key on first run
   if [ ! -e .first_run_done ]; then
     echo "Generating APP_KEY"
     php artisan key:generate
+    echo "Generating API_KEY"
+    ADMIN_API_KEY=$(head -c 64 < /dev/urandom | base64 | tr -dc 'A-Za-z0-9' | head -c 64)
+    sed -i "s#ADMIN_API_KEY=.*#ADMIN_API_KEY=$ADMIN_API_KEY#" .env
     touch .first_run_done
   fi
 fi
