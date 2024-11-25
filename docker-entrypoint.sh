@@ -1,6 +1,19 @@
 #!/bin/bash
 set -e
 
+# mail setup
+CONF=/etc/ssmtp/ssmtp.conf
+rm -f $CONF
+
+# Check if the directory already exists.
+if [ ! -d "$CONF" ]; then
+  ### Take action if $DIR exists ###
+  mkdir /etc/ssmtp -p
+fi
+
+# Filter the env variables for ssmtp configs and write them to the config file
+env | awk -F'\n' '/^SSMTP_/ { print substr($1, 7) }' > "$CONF"
+
 # Configure NGINX and www.conf
 ln -s /etc/nginx/sites-available/dreamfactory.conf /etc/nginx/sites-enabled/dreamfactory.conf && \
 sed -i "s/pm.max_children = 5/pm.max_children = 5000/" /etc/php/8.3/fpm/pool.d/www.conf && \
