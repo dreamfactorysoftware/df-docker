@@ -22,8 +22,9 @@ RUN mkdir -p /opt/dreamfactory/storage/app \
     && chmod -R 775 /opt/dreamfactory/bootstrap/cache
 
 # Install packages
-RUN composer install --no-dev --ignore-platform-reqs && \
-    php artisan df:env --db_connection=sqlite --df_install=Docker && \
+RUN composer install --no-dev --ignore-platform-reqs
+
+RUN php artisan df:env --db_connection=sqlite --df_install=Docker && \
     chown -R www-data:www-data /opt/dreamfactory && \
     rm /etc/nginx/sites-enabled/default
 
