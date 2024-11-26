@@ -21,10 +21,11 @@ RUN mkdir -p /opt/dreamfactory/storage/app \
     && chmod -R 775 /opt/dreamfactory/storage \
     && chmod -R 775 /opt/dreamfactory/bootstrap/cache
 
-# Install packages
-RUN composer install --no-dev --ignore-platform-reqs
-
-RUN php artisan df:env --db_connection=sqlite --df_install=Docker && \
+# Clear composer cache and install packages
+RUN composer clear-cache && \
+    COMPOSER_MEMORY_LIMIT=-1 composer install --no-dev --ignore-platform-reqs --no-scripts && \
+    COMPOSER_MEMORY_LIMIT=-1 composer install --no-dev --ignore-platform-reqs && \
+    php artisan df:env --db_connection=sqlite --df_install=Docker && \
     chown -R www-data:www-data /opt/dreamfactory && \
     rm /etc/nginx/sites-enabled/default
 
