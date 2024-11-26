@@ -31,6 +31,24 @@ sed -i "s;%SERVERNAME%;${SERVERNAME:=dreamfactory.app};g" /etc/nginx/sites-avail
 # Allow Laravel to accept requests from top level reverse proxy if it is using HTTPS. "off" by default.
 sed -i "s;%HTTPS_HEADER%;${HTTPS_HEADER:=off};g" /etc/nginx/sites-available/dreamfactory.conf
 
+# Wait for MySQL to be ready if using MySQL
+if [ "$DB_CONNECTION" = "mysql" ]; then
+    echo "Waiting for MySQL to be ready..."
+    for i in {1..30}; do
+        if mysql -h"$DB_HOST" -u"$DB_USERNAME" -p"$DB_PASSWORD" -e "SELECT 1" >/dev/null 2>&1; then
+            echo "MySQL is ready"
+            break
+        fi
+        echo "MySQL not ready yet... waiting"
+        sleep 1
+    done
+fi
+
+if [ ! -d "/opt/dreamfactory/public/dreamfactory" ]; then
+    cd /opt/dreamfactory
+    composer install --no-dev --ignore-platform-reqs
+fi
+
 # do we have configs for a cache ?
 if [ -n "$CACHE_DRIVER" ]; then
   echo "Setting CACHE_DRIVER, CACHE_HOST, CACHE_DATABASE"
