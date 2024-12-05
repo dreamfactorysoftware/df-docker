@@ -23,6 +23,7 @@ sed -i "s/pm.max_spare_servers = 3/pm.max_spare_servers = 200/" /etc/php/8.3/fpm
 sed -i "s/pm = dynamic/pm = ondemand/" /etc/php/8.3/fpm/pool.d/www.conf && \
 sed -i "s/worker_connections 768;/worker_connections 2048;/" /etc/nginx/nginx.conf && \
 sed -i "s/keepalive_timeout 65;/keepalive_timeout 10;/" /etc/nginx/nginx.conf
+sed -i 's/DF_INSTALL=.*/DF_INSTALL=Docker/' .env
 
 # update site configuration
 # if no servername is provided use dreamfactory.app as default
