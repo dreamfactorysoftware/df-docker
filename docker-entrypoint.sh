@@ -5,23 +5,25 @@ set -e
 CONF=/etc/ssmtp/ssmtp.conf
 rm -f $CONF
 
-for E in $(env)
-do
-  if [ "$(echo $E | sed -e '/^SSMTP_/!d' )" ]
-  then
-    echo $E | sed -e 's/^SSMTP_//' >> $CONF
-  fi
-done
+# Check if the directory already exists.
+if [ ! -d "$CONF" ]; then
+  ### Take action if $DIR exists ###
+  mkdir /etc/ssmtp -p
+fi
+
+# Filter the env variables for ssmtp configs and write them to the config file
+env | awk -F'\n' '/^SSMTP_/ { print substr($1, 7) }' > "$CONF"
 
 # Configure NGINX and www.conf
 ln -s /etc/nginx/sites-available/dreamfactory.conf /etc/nginx/sites-enabled/dreamfactory.conf && \
-sed -i "s/pm.max_children = 5/pm.max_children = 5000/" /etc/php/7.4/fpm/pool.d/www.conf && \
-sed -i "s/pm.start_servers = 2/pm.start_servers = 150/" /etc/php/7.4/fpm/pool.d/www.conf && \
-sed -i "s/pm.min_spare_servers = 1/pm.min_spare_servers = 100/" /etc/php/7.4/fpm/pool.d/www.conf && \
-sed -i "s/pm.max_spare_servers = 3/pm.max_spare_servers = 200/" /etc/php/7.4/fpm/pool.d/www.conf && \
-sed -i "s/pm = dynamic/pm = ondemand/" /etc/php/7.4/fpm/pool.d/www.conf && \
+sed -i "s/pm.max_children = 5/pm.max_children = 5000/" /etc/php/8.3/fpm/pool.d/www.conf && \
+sed -i "s/pm.start_servers = 2/pm.start_servers = 150/" /etc/php/8.3/fpm/pool.d/www.conf && \
+sed -i "s/pm.min_spare_servers = 1/pm.min_spare_servers = 100/" /etc/php/8.3/fpm/pool.d/www.conf && \
+sed -i "s/pm.max_spare_servers = 3/pm.max_spare_servers = 200/" /etc/php/8.3/fpm/pool.d/www.conf && \
+sed -i "s/pm = dynamic/pm = ondemand/" /etc/php/8.3/fpm/pool.d/www.conf && \
 sed -i "s/worker_connections 768;/worker_connections 2048;/" /etc/nginx/nginx.conf && \
 sed -i "s/keepalive_timeout 65;/keepalive_timeout 10;/" /etc/nginx/nginx.conf
+sed -i 's/DF_INSTALL=.*/DF_INSTALL=Docker/' .env
 
 # update site configuration
 # if no servername is provided use dreamfactory.app as default
@@ -29,6 +31,24 @@ sed -i "s;%SERVERNAME%;${SERVERNAME:=dreamfactory.app};g" /etc/nginx/sites-avail
 
 # Allow Laravel to accept requests from top level reverse proxy if it is using HTTPS. "off" by default.
 sed -i "s;%HTTPS_HEADER%;${HTTPS_HEADER:=off};g" /etc/nginx/sites-available/dreamfactory.conf
+
+# Wait for MySQL to be ready if using MySQL
+if [ "$DB_CONNECTION" = "mysql" ]; then
+    echo "Waiting for MySQL to be ready..."
+    for i in {1..30}; do
+        if mysql -h"$DB_HOST" -u"$DB_USERNAME" -p"$DB_PASSWORD" -e "SELECT 1" >/dev/null 2>&1; then
+            echo "MySQL is ready"
+            break
+        fi
+        echo "MySQL not ready yet... waiting"
+        sleep 1
+    done
+fi
+
+if [ ! -d "/opt/dreamfactory/public/dreamfactory" ]; then
+    cd /opt/dreamfactory
+    composer install --no-dev --ignore-platform-reqs
+fi
 
 # do we have configs for a cache ?
 if [ -n "$CACHE_DRIVER" ]; then
@@ -194,8 +214,8 @@ if [ -n "$SENDMAIL_DEFAULT_COMMAND" ]; then
   sed -i "s/#SENDMAIL_DEFAULT_COMMAND=.*/SENDMAIL_DEFAULT_COMMAND=\"$(echo "$SENDMAIL_DEFAULT_COMMAND" | sed 's/\//\\\//g')\"/" .env
 fi
 
-# start php7.4-fpm
-service php7.4-fpm start
+# start php8.3-fpm
+service php8.3-fpm start
 
 # start cron service for df-scheduler
 service cron start

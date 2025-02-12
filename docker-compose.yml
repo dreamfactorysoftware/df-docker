@@ -9,14 +9,23 @@ services:
     image: mysql:5.7
     volumes:
       - df-mysql:/var/lib/mysql
+
+  example_data:
+    environment:
+      DATASETS: pagila
+      POSTGRES_PASSWORD: root_pw
+    image: aa8y/postgres-dataset
+      
   redis:
     image: redis
 
   web:
+    depends_on:
+      - mysql
     environment:
       SERVERNAME: dreamfactory.local
-#      HTTPS_HEADER: "on"
-      # APP_KEY: VALUE
+      # HTTPS_HEADER: "on"
+      # APP_KEY: YOUR_APP_KEY
       DB_DRIVER: mysql
       DB_HOST: mysql
       DB_USERNAME: df_admin
@@ -27,9 +36,9 @@ services:
       CACHE_DATABASE: 0
       CACHE_PORT: 6379
 
-#      APP_LOG_LEVEL: debug
+      APP_LOG_LEVEL: debug
 #      LOG_TO_STDOUT: "true"
-#      APP_DEBUG: "true"
+      APP_DEBUG: "true"
 
 #      Uncomment and configure to enable emailing
 #      SENDMAIL_DEFAULT_COMMAND: "/usr/sbin/sendmail -t"
@@ -50,6 +59,7 @@ services:
 #      LOGSDB_ENABLED: "true"
     volumes:
       - df-storage:/opt/dreamfactory/storage
+#      - ../dreamfactory-development-packages:/src/dreamfactory
     build: .
     ports:
       - "80:80"
