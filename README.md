@@ -3,7 +3,7 @@
 </h1>
 
 <p align="center">
-    Docker container for DreamFactory 6.x using Ubuntu 22.04, PHP 8.1 and NGINX.
+    Docker container for DreamFactory 7.x using Ubuntu 24.04, PHP 8.3 and NGINX.
 </p>
 
 <p align="center">
