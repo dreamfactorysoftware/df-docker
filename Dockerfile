@@ -1,10 +1,10 @@
-FROM dreamfactorysoftware/df-base-img:shift
+FROM dreamfactorysoftware/df-base-img:v7
 
 # Configure Nginx
 COPY dreamfactory.conf /etc/nginx/sites-available/dreamfactory.conf
 
 # Get DreamFactory
-ARG BRANCH=shift-124321
+ARG BRANCH=master
 RUN git clone --branch $BRANCH https://github.com/dreamfactorysoftware/dreamfactory.git /opt/dreamfactory
 
 WORKDIR /opt/dreamfactory
