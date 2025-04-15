@@ -1,7 +1,37 @@
 FROM dreamfactorysoftware/df-base-img:v7
 
+# Update nginx to the latest version
+# Install prerequisites for adding repository
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    gnupg2 \
+    ca-certificates \
+    lsb-release \
+    debian-archive-keyring && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Add Official Nginx Repository Key
+RUN curl -fsSL https://nginx.org/keys/nginx_signing.key | gpg --dearmor -o /usr/share/keyrings/nginx-archive-keyring.gpg
+
+# Add the Nginx repository using the official Ubuntu format
+# This determines the codename (e.g., jammy, focal) and writes the sources.list file
+RUN UBUNTU_CODENAME=$(lsb_release -cs) && \
+    echo "deb [signed-by=/usr/share/keyrings/nginx-archive-keyring.gpg] http://nginx.org/packages/mainline/ubuntu/ ${UBUNTU_CODENAME} nginx" > /etc/apt/sources.list.d/nginx.list
+
+# Update lists again (now including nginx repo), remove old, install new version
+RUN apt-get update && \
+    apt-get remove -y nginx nginx-common nginx-core nginx-full && \
+    # Install latest version
+    apt-get install -y --no-install-recommends nginx && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# add nginx to the www-data group so Nginx process has access to PHP-FPM process with Unix sockets
+RUN adduser nginx www-data
+
 # Configure Nginx
-COPY dreamfactory.conf /etc/nginx/sites-available/dreamfactory.conf
+COPY dreamfactory.conf /etc/nginx/conf.d/dreamfactory.conf
 
 # Get DreamFactory
 ARG BRANCH=master
@@ -30,7 +60,7 @@ RUN composer clear-cache && \
     COMPOSER_MEMORY_LIMIT=-1 composer install --no-dev --ignore-platform-reqs && \
     php artisan df:env --db_connection=sqlite --df_install=Docker && \
     chown -R www-data:www-data /opt/dreamfactory && \
-    rm /etc/nginx/sites-enabled/default
+    rm -f /etc/nginx/conf.d/default.conf
 
 # Replace YOUR_LICENSE_KEY with your license key, keeping the comma at the end
 #RUN sed -i "s,\#DF_REGISTER_CONTACT=,DF_LICENSE_KEY=YOUR_LICENSE_KEY," /opt/dreamfactory/.env

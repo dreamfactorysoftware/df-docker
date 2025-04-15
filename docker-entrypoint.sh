@@ -15,7 +15,9 @@ fi
 env | awk -F'\n' '/^SSMTP_/ { print substr($1, 7) }' > "$CONF"
 
 # Configure NGINX and www.conf
-ln -s /etc/nginx/sites-available/dreamfactory.conf /etc/nginx/sites-enabled/dreamfactory.conf && \
+cp /etc/nginx/sites-available/dreamfactory.conf /etc/nginx/conf.d/dreamfactory.conf && \
+# remove default config so it doesn't interfere with dreamfactory.conf
+rm -f /etc/nginx/conf.d/default.conf && \
 sed -i "s/pm.max_children = 5/pm.max_children = 5000/" /etc/php/8.3/fpm/pool.d/www.conf && \
 sed -i "s/pm.start_servers = 2/pm.start_servers = 150/" /etc/php/8.3/fpm/pool.d/www.conf && \
 sed -i "s/pm.min_spare_servers = 1/pm.min_spare_servers = 100/" /etc/php/8.3/fpm/pool.d/www.conf && \
@@ -27,10 +29,10 @@ sed -i 's/DF_INSTALL=.*/DF_INSTALL=Docker/' .env
 
 # update site configuration
 # if no servername is provided use dreamfactory.app as default
-sed -i "s;%SERVERNAME%;${SERVERNAME:=dreamfactory.app};g" /etc/nginx/sites-available/dreamfactory.conf
+sed -i "s;%SERVERNAME%;${SERVERNAME:=dreamfactory.app};g" /etc/nginx/conf.d/dreamfactory.conf
 
 # Allow Laravel to accept requests from top level reverse proxy if it is using HTTPS. "off" by default.
-sed -i "s;%HTTPS_HEADER%;${HTTPS_HEADER:=off};g" /etc/nginx/sites-available/dreamfactory.conf
+sed -i "s;%HTTPS_HEADER%;${HTTPS_HEADER:=off};g" /etc/nginx/conf.d/dreamfactory.conf
 
 # Wait for MySQL to be ready if using MySQL
 if [ "$DB_CONNECTION" = "mysql" ]; then
