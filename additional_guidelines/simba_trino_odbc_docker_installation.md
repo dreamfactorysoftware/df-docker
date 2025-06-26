@@ -19,11 +19,11 @@ To enable Trino connectors in DreamFactory, you need to install the Simba Trino 
 Add the following (uncommented) lines to your Dockerfile to install the driver and license:
 
 ```dockerfile
-# COPY <SimbaTrinoODBCDriverFileName>.deb /tmp/
-# COPY SimbaTrinoODBCDriver.lic /tmp/
-# RUN dpkg -i /tmp/<SimbaTrinoODBCDriverFileName>.deb \
-#     && mkdir -p /opt/simba/trinoodbc/lib/64/ \
-#     && cp /tmp/SimbaTrinoODBCDriver.lic /opt/simba/trinoodbc/lib/64/
+COPY <SimbaTrinoODBCDriverFileName>.deb /tmp/
+COPY SimbaTrinoODBCDriver.lic /tmp/
+RUN dpkg -i /tmp/<SimbaTrinoODBCDriverFileName>.deb \
+    && mkdir -p /opt/simba/trinoodbc/lib/64/ \
+    && cp /tmp/SimbaTrinoODBCDriver.lic /opt/simba/trinoodbc/lib/64/
 ```
 
 Replace `<SimbaTrinoODBCDriverFileName>` with your actual driver file name.
