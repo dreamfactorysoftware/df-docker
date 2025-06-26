@@ -3,7 +3,7 @@
 </h1>
 
 <p align="center">
-    Docker container for DreamFactory 6.x using Ubuntu 22.04, PHP 8.1 and NGINX.
+    Docker container for DreamFactory 7.x using Ubuntu 24.04, PHP 8.3 and NGINX.
 </p>
 
 <p align="center">
@@ -78,9 +78,9 @@ Go to `127.0.0.1` in your browser. It will take some time upon building, but you
 
 ### 1) Add the license files to the `df-docker` directory
 
-### 2) Uncomment lines 14 and 51 of `Dockerfile`
+### 2) Uncomment lines 25 and 36 of `Dockerfile`
 
-### 3) Add the License Key to line 51 of `Dockerfile`
+### 3) Add the License Key to line 36 of `Dockerfile`
 
 ### 4) Build images
 `docker-compose build`
@@ -126,3 +126,12 @@ push notifications? Require API limiting and/or auditing? Schedule a demo [with 
 ## Feedback and Contributions
 
 Feedback is welcome on our [forum](http://community.dreamfactory.com/) or in the form of pull requests and/or issues. Contributions should follow the strategy outlined in ["Contributing to a project"](http://help.github.com/articles/fork-a-repo#contributing-to-a-project).
+
+<a name="additional guidelines"></a>
+## Additional Guidelines
+
+This section includes guidelines that might be helpful for specific usage scenarios and advanced configurations.
+
+### Available Guides
+
+- [Adding Simba Trino ODBC Driver to a Docker Environment](./additional_guidelines/simba_trino_odbc_docker_installation.md)  
