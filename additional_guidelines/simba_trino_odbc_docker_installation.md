@@ -1,75 +1,38 @@
 ## Adding Simba Trino ODBC Driver to a Docker Environment
 
-In case you want to utilize Trino connectors on DreamFactory, you will have to install the ODBC driver for it, which will allow DreamFactory to communicate with Trino through the ODBC interface and perform SQL queries via supported endpoints.
+To enable Trino connectors in DreamFactory, you need to install the Simba Trino ODBC driver and provide a valid license file.
 
 ### Preparation
 
 1. **Download the Simba Trino ODBC driver**  
-   Visit the official [InsightSoftware Simba Trino ODBC Driver page](https://www.insightsoftware.com/drivers/trino-odbc-jdbc/) and download the appropriate driver for Ubuntu. Preferably, get the `.deb` package.
+   Get the `.deb` package from [InsightSoftware Simba Trino ODBC Driver page](https://www.insightsoftware.com/drivers/trino-odbc-jdbc/).
 
-2. **Retrieve the license file**  
-   After registering and downloading the driver, you should receive an email containing the `SimbaTrinoODBCDriver.lic` license file. Download and keep it ready.
+2. **Obtain the license file**  
+   You should receive `SimbaTrinoODBCDriver.lic` after registering.
 
----
-
-### Installation Methods
-
-You can proceed with either of the following approaches:
-
-#### Option 1: Move both the `.deb` driver file and the `.lic` license file into dreamfactory folder
-
-1. Inside the container:
-   ```bash
-   docker-compose exec web bash
-   ```
-
-2. From inside the container, install the driver:
-   ```bash
-   dpkg -i /path/to/your/simba-trino-driver-name.deb
-   ```
-
-3. Place the license file:
-   ```bash
-   cp /path/to/your/SimbaTrinoODBCDriver.lic /opt/simba/trinoodbc/lib/
-   ```
+3. **Place them into the folder with Dockerfile**
 
 ---
 
-#### Option 2: Copy from host to container
+### Installation in Docker
 
-1. Use `docker cp` to copy the files into the container:
-   ```bash
-   docker cp simba-trino-driver-name.deb dreamfactory_web_1:/tmp/
-   docker cp SimbaTrinoODBCDriver.lic dreamfactory_web_1:/tmp/
-   ```
+Add the following (uncommented) lines to your Dockerfile to install the driver and license:
 
-2. Enter the container:
-   ```bash
-   docker-compose exec web bash
-   ```
+```dockerfile
+# COPY <SimbaTrinoODBCDriverFileName>.deb /tmp/
+# COPY SimbaTrinoODBCDriver.lic /tmp/
+# RUN dpkg -i /tmp/<SimbaTrinoODBCDriverFileName>.deb \
+#     && mkdir -p /opt/simba/trinoodbc/lib/64/ \
+#     && cp /tmp/SimbaTrinoODBCDriver.lic /opt/simba/trinoodbc/lib/64/
+```
 
-3. Inside the container, run:
-   ```bash
-   dpkg -i /tmp/simba-trino-driver-name.deb
-   cp /tmp/SimbaTrinoODBCDriver.lic /opt/simba/trinoodbc/lib/
-   ```
+Replace `<SimbaTrinoODBCDriverFileName>` with your actual driver file name.
+
+> **Note:** If you only have an `.rpm` file, try converting it to `.deb` using `alien` before building the Docker image:
+>
+> ```bash
+> sudo apt-get install alien
+> sudo alien --to-deb simba-trino-driver-name.rpm
+> ```
 
 ---
-
-### Troubleshooting
-
-#### Problem: You only have an `.rpm` file
-
-InsightSoftware may only provide `.rpm` packages. Since the Docker container is Ubuntu-based, you'll need to convert the `.rpm` to `.deb` using `alien`.
-
-1. Install `alien` (on your host):
-   ```bash
-   sudo apt-get install alien
-   ```
-
-2. Convert the `.rpm` file:
-   ```bash
-   sudo alien --to-deb simba-trino-driver-name.rpm
-   ```
-
-3. Proceed with installation inside the container as described above using the converted `.deb` file.
