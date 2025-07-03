@@ -135,4 +135,3 @@ This section includes guidelines that might be helpful for specific usage scenar
 ### Available Guides
 
 - [Adding Simba Trino ODBC Driver to a Docker Environment](./additional_guidelines/trino_odbc_drivers_installation/simba_trino_odbc_docker_installation.md)  
-- [Simba Trino ODBC Driver Installation Guide For Windows](./additional_guidelines/trino_odbc_drivers_installation/simba_trino_odbc_windows_installation.md)  
