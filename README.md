@@ -53,10 +53,10 @@ The easiest way to configure the DreamFactory application is to use docker-compo
 ### 2) Edit `docker-compose.yml` (optional)
 
 ### 3) Build images
-`docker-compose build`
+`docker compose build`
 
 ### 4) Start containers
-`docker-compose up -d`
+`docker compose up -d`
 
     NOTE: volume df-storage:/opt/dreamfactory/storage is created to store all file based (apps, logs etc.) data from DreamFactory.
     This basically stores all data written by DreamFactory (at /opt/dreamfactory/storage location) in the df-storage volume. This 
@@ -64,11 +64,11 @@ The easiest way to configure the DreamFactory application is to use docker-compo
     
     to stop and remove all containers you can use the command 
     
-        docker-compose down
+        docker compose down
     
     to stop and remove all containers including volumes use 
     
-        docker-compose down -v
+        docker compose down -v
 
 ### 5) Access Admin UI
 Go to `127.0.0.1` in your browser. It will take some time upon building, but you will be asked to create your first admin user.
@@ -83,10 +83,10 @@ Go to `127.0.0.1` in your browser. It will take some time upon building, but you
 ### 3) Add the License Key to line 36 of `Dockerfile`
 
 ### 4) Build images
-`docker-compose build`
+`docker compose build`
 
 ### 5) Start containers
-`docker-compose up -d`
+`docker compose up -d`
 
 ### 6) Access the app
 Go to `127.0.0.1` in your browser. It will take some time upon building, but you will be asked to create your first admin user.
