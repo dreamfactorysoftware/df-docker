@@ -101,7 +101,7 @@ Set this value as the APP_KEY value in the docker-compose.yml file (line 28), en
 <a name="testing"></a>
 ## Use the Included PostgreSQL Database
 
-We mount a Postgres container that contains over 100k records to test without connecting your own data sets. To generate a REST API for this database login to your DreamFactory instance and click the `Connect to Database` button on the home page. Choose PostgreSQL, then add an easily recalled namespace such as pgsql. You can enter anything you'd like into the description field. Click `Next` and enter the below connection details and then press the `Create & Test` button:
+We mount a Postgres container that contains over 100k records to test without connecting your own data sets. To generate a REST API for this database, login to your DreamFactory instance and click the `Connect to Database` button on the home page. Choose PostgreSQL, then add an easily recalled namespace such as pgsql. You can enter anything you'd like into the description field. Click `Next` and enter the below connection details and then press the `Create & Test` button:
 
 * Host: example_data
 * Port: 5432
