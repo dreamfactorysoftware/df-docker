@@ -17,7 +17,7 @@ services:
     image: aa8y/postgres-dataset
       
   redis:
-    image: redis:latest
+    image: redis
 
   web:
     depends_on:
