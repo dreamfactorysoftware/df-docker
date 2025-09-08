@@ -6,7 +6,7 @@ services:
       MYSQL_DATABASE: dreamfactory
       MYSQL_USER: df_admin
       MYSQL_PASSWORD: df_admin
-    image: mysql:5.7
+    image: mysql:8.0
     volumes:
       - df-mysql:/var/lib/mysql
 
@@ -17,7 +17,7 @@ services:
     image: aa8y/postgres-dataset
       
   redis:
-    image: redis
+    image: redis:latest
 
   web:
     depends_on:

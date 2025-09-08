@@ -6,7 +6,7 @@ CONF=/etc/ssmtp/ssmtp.conf
 rm -f $CONF
 
 # Check if the directory already exists.
-if [ ! -d "$CONF" ]; then
+if [ ! -d "/etc/ssmtp" ]; then
   ### Take action if $DIR exists ###
   mkdir /etc/ssmtp -p
 fi
@@ -220,5 +220,23 @@ service php8.3-fpm start
 # start cron service for df-scheduler
 service cron start
 
-# start nginx
-exec /usr/sbin/nginx -g "daemon off;"
+# Create nginx directories and set permissions
+mkdir -p /var/lib/nginx/body /var/lib/nginx/fastcgi /var/lib/nginx/proxy /var/lib/nginx/scgi /var/lib/nginx/uwsgi
+mkdir -p /var/log/nginx /run
+chown -R www-data:www-data /var/lib/nginx /var/log/nginx /run
+chmod -R 755 /var/lib/nginx
+chmod -R 755 /var/log/nginx
+chmod -R 755 /run
+
+# Ensure the error log file exists and has proper permissions
+touch /var/log/nginx/error.log
+chown www-data:www-data /var/log/nginx/error.log
+chmod 644 /var/log/nginx/error.log
+
+# Create a script for easy access as www-data user
+echo '#!/bin/bash\nexec /bin/bash' > /usr/local/bin/shell-as-www-data
+chmod +x /usr/local/bin/shell-as-www-data
+
+# Switch to www-data user for running nginx
+# This ensures the container runs as non-root while still allowing system setup
+exec gosu www-data /usr/sbin/nginx -g "daemon off;"

@@ -22,7 +22,7 @@ RUN mkdir -p /opt/dreamfactory/storage/app \
     && chmod -R 775 /opt/dreamfactory/bootstrap/cache
 
 # Add commercial files if running a licensed version
-#COPY composer.* /opt/dreamfactory/
+COPY composer.* /opt/dreamfactory/
 
 # Clear composer cache and install packages
 RUN composer clear-cache && \
@@ -33,15 +33,16 @@ RUN composer clear-cache && \
     rm /etc/nginx/sites-enabled/default
 
 # Replace YOUR_LICENSE_KEY with your license key, keeping the comma at the end
-#RUN sed -i "s,\#DF_REGISTER_CONTACT=,DF_LICENSE_KEY=YOUR_LICENSE_KEY," /opt/dreamfactory/.env
+RUN sed -i "s,\#DF_REGISTER_CONTACT=,DF_LICENSE_KEY=f573bd60df1382591932ae79ba7165f0," /opt/dreamfactory/.env
 
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 
 # Set proper permission to docker-entrypoint.sh script and forward error logs to docker log collector
 RUN chmod +x /docker-entrypoint.sh && ln -sf /dev/stderr /var/log/nginx/error.log
 
-# Clean up
-RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+# Install gosu for user switching (su-exec alternative)
+RUN apt-get update && apt-get install -y gosu && \
+    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 EXPOSE 80
 
