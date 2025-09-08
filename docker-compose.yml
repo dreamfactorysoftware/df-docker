@@ -6,7 +6,7 @@ services:
       MYSQL_DATABASE: dreamfactory
       MYSQL_USER: df_admin
       MYSQL_PASSWORD: df_admin
-    image: mysql:8.0
+    image: mysql:5.7
     volumes:
       - df-mysql:/var/lib/mysql
 
