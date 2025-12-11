@@ -27,6 +27,7 @@ services:
       # HTTPS_HEADER: "on"
       # APP_KEY: YOUR_APP_KEY
       DB_DRIVER: mysql
+      DB_CONNECTION: mysql
       DB_HOST: mysql
       DB_USERNAME: df_admin
       DB_PASSWORD: df_admin
@@ -57,6 +58,9 @@ services:
 #      LOGSDB_USERNAME: mongoadmin
 #      LOGSDB_PASSWORD: password
 #      LOGSDB_ENABLED: "true"
+
+#      Uncomment to enable MCP daemon process
+#      ENABLE_MCP_DAEMON: "true"
     volumes:
       - df-storage:/opt/dreamfactory/storage
 #      - ../dreamfactory-development-packages:/src/dreamfactory

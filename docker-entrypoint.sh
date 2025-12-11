@@ -214,6 +214,12 @@ if [ -n "$SENDMAIL_DEFAULT_COMMAND" ]; then
   sed -i "s/#SENDMAIL_DEFAULT_COMMAND=.*/SENDMAIL_DEFAULT_COMMAND=\"$(echo "$SENDMAIL_DEFAULT_COMMAND" | sed 's/\//\\\//g')\"/" .env
 fi
 
+if [ -n "$ENABLE_MCP_DAEMON" ]; then
+  echo "Starting MCP daemon..."
+  /opt/dreamfactory/vendor/dreamfactory/df-mcp-server/scripts/start-daemon.sh &
+  MCP_DAEMON_PID=$!
+fi
+
 # start php8.3-fpm
 service php8.3-fpm start
 
