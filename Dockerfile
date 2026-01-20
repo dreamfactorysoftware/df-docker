@@ -24,6 +24,9 @@ RUN mkdir -p /opt/dreamfactory/storage/app \
 # Add commercial files if running a licensed version
 #COPY composer.* /opt/dreamfactory/
 
+# Add access key to pull the private packages
+#RUN composer config --global --auth github-oauth.github.com "DF_ACCESS_KEY"
+
 # Clear composer cache and install packages
 RUN composer clear-cache && \
     COMPOSER_MEMORY_LIMIT=-1 composer install --no-dev --ignore-platform-reqs --no-scripts && \
