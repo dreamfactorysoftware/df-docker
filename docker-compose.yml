@@ -40,7 +40,7 @@ services:
       APP_LOG_LEVEL: debug
 #      LOG_TO_STDOUT: "true"
       APP_DEBUG: "true"
-
+      ENABLE_MCP_DAEMON: "true"
 #      Uncomment and configure to enable emailing
 #      SENDMAIL_DEFAULT_COMMAND: "/usr/sbin/sendmail -t"
 #      SSMTP_root:
@@ -59,8 +59,6 @@ services:
 #      LOGSDB_PASSWORD: password
 #      LOGSDB_ENABLED: "true"
 
-#      Uncomment to enable MCP daemon process
-#      ENABLE_MCP_DAEMON: "true"
     volumes:
       - df-storage:/opt/dreamfactory/storage
 #      - ../dreamfactory-development-packages:/src/dreamfactory
