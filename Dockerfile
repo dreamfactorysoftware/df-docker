@@ -35,6 +35,12 @@ RUN composer clear-cache && \
     chown -R www-data:www-data /opt/dreamfactory && \
     rm /etc/nginx/sites-enabled/default
 
+# Install MCP daemon Node.js dependencies (if the daemon package is present)
+RUN if [ -f /opt/dreamfactory/vendor/dreamfactory/df-mcp-server/daemon/package.json ]; then \
+        cd /opt/dreamfactory/vendor/dreamfactory/df-mcp-server/daemon && \
+        npm install --production; \
+    fi
+
 # Replace YOUR_LICENSE_KEY with your license key, keeping the comma at the end
 #RUN sed -i "s,\#DF_REGISTER_CONTACT=,DF_LICENSE_KEY=YOUR_LICENSE_KEY," /opt/dreamfactory/.env
 
