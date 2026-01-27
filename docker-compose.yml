@@ -39,6 +39,7 @@ services:
       APP_LOG_LEVEL: debug
 #      LOG_TO_STDOUT: "true"
       APP_DEBUG: "true"
+      ENABLE_MCP_DAEMON: "true"
 
 #      Uncomment and configure to enable emailing
 #      SENDMAIL_DEFAULT_COMMAND: "/usr/sbin/sendmail -t"
