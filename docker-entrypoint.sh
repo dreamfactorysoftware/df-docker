@@ -214,10 +214,22 @@ if [ -n "$SENDMAIL_DEFAULT_COMMAND" ]; then
   sed -i "s/#SENDMAIL_DEFAULT_COMMAND=.*/SENDMAIL_DEFAULT_COMMAND=\"$(echo "$SENDMAIL_DEFAULT_COMMAND" | sed 's/\//\\\//g')\"/" .env
 fi
 
+# Start MCP daemon if enabled
 if [ -n "$ENABLE_MCP_DAEMON" ]; then
-  echo "Starting MCP daemon..."
-  /opt/dreamfactory/vendor/dreamfactory/df-mcp-server/scripts/start-daemon.sh &
-  MCP_DAEMON_PID=$!
+  MCP_DAEMON_DIR="/opt/dreamfactory/vendor/dreamfactory/df-mcp-server/daemon"
+  if [ -f "${MCP_DAEMON_DIR}/package.json" ]; then
+    # Ensure node_modules are installed (may be missing if vendor was updated)
+    if [ ! -d "${MCP_DAEMON_DIR}/node_modules" ]; then
+      echo "Installing MCP daemon dependencies..."
+      (cd "${MCP_DAEMON_DIR}" && npm install --production)
+    fi
+    echo "Starting MCP daemon..."
+    /opt/dreamfactory/vendor/dreamfactory/df-mcp-server/scripts/start-daemon.sh &
+    MCP_DAEMON_PID=$!
+    echo "MCP daemon started (PID: ${MCP_DAEMON_PID})"
+  else
+    echo "Warning: ENABLE_MCP_DAEMON is set but MCP daemon package not found"
+  fi
 fi
 
 # start php8.3-fpm
