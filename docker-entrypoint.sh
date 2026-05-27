@@ -16,11 +16,11 @@ env | awk -F'\n' '/^SSMTP_/ { print substr($1, 7) }' > "$CONF"
 
 # Configure NGINX and www.conf
 ln -s /etc/nginx/sites-available/dreamfactory.conf /etc/nginx/sites-enabled/dreamfactory.conf && \
-sed -i "s/pm.max_children = 5/pm.max_children = 5000/" /etc/php/8.3/fpm/pool.d/www.conf && \
-sed -i "s/pm.start_servers = 2/pm.start_servers = 150/" /etc/php/8.3/fpm/pool.d/www.conf && \
-sed -i "s/pm.min_spare_servers = 1/pm.min_spare_servers = 100/" /etc/php/8.3/fpm/pool.d/www.conf && \
-sed -i "s/pm.max_spare_servers = 3/pm.max_spare_servers = 200/" /etc/php/8.3/fpm/pool.d/www.conf && \
-sed -i "s/pm = dynamic/pm = ondemand/" /etc/php/8.3/fpm/pool.d/www.conf && \
+sed -i "s/pm.max_children = 5/pm.max_children = 5000/" /etc/php/8.5/fpm/pool.d/www.conf && \
+sed -i "s/pm.start_servers = 2/pm.start_servers = 150/" /etc/php/8.5/fpm/pool.d/www.conf && \
+sed -i "s/pm.min_spare_servers = 1/pm.min_spare_servers = 100/" /etc/php/8.5/fpm/pool.d/www.conf && \
+sed -i "s/pm.max_spare_servers = 3/pm.max_spare_servers = 200/" /etc/php/8.5/fpm/pool.d/www.conf && \
+sed -i "s/pm = dynamic/pm = ondemand/" /etc/php/8.5/fpm/pool.d/www.conf && \
 sed -i "s/worker_connections 768;/worker_connections 2048;/" /etc/nginx/nginx.conf && \
 sed -i "s/keepalive_timeout 65;/keepalive_timeout 10;/" /etc/nginx/nginx.conf
 sed -i 's/DF_INSTALL=.*/DF_INSTALL=Docker/' .env
@@ -232,8 +232,8 @@ if [ -n "$ENABLE_MCP_DAEMON" ]; then
   fi
 fi
 
-# start php8.3-fpm
-service php8.3-fpm start
+# start php8.5-fpm
+service php8.5-fpm start
 
 # start cron service for df-scheduler
 service cron start
