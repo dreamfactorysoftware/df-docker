@@ -47,7 +47,9 @@ sed -i 's/DF_INSTALL=.*/DF_INSTALL=Docker/' .env
 # if no servername is provided use dreamfactory.app as default
 sed -i "s;%SERVERNAME%;${SERVERNAME:=dreamfactory.app};g" /etc/nginx/sites-available/dreamfactory.conf
 
-# Allow Laravel to accept requests from top level reverse proxy if it is using HTTPS. "off" by default.
+# Tell PHP-FPM/Laravel the original request was HTTPS when a TLS-terminating
+# reverse proxy sits in front of this container (HTTPS_HEADER=on). "off" by
+# default; leaving it off behind TLS makes Laravel emit http:// absolute URLs.
 sed -i "s;%HTTPS_HEADER%;${HTTPS_HEADER:=off};g" /etc/nginx/sites-available/dreamfactory.conf
 
 # Wait for MySQL to be ready if using MySQL
