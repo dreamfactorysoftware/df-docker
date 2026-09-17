@@ -24,10 +24,6 @@ services:
       - mysql
     environment:
       SERVERNAME: dreamfactory.local
-      # Enable when a TLS-terminating proxy or load balancer sits in front of
-      # this container, so Laravel generates https:// URLs (OAuth discovery
-      # metadata is wrong otherwise). Keep the quotes: bare `on` is a YAML 1.1
-      # boolean and would not survive substitution as the literal string "on".
       # HTTPS_HEADER: "on"
       # APP_KEY: YOUR_APP_KEY
       DB_DRIVER: mysql

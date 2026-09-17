@@ -52,8 +52,6 @@ The easiest way to configure the DreamFactory application is to use docker-compo
 
 ### 2) Edit `docker-compose.yml` (optional)
 
-If TLS is terminated in front of the container (reverse proxy, load balancer, or CDN), uncomment `HTTPS_HEADER: "on"` in the `web` service environment so DreamFactory generates `https://` URLs — without it, OAuth discovery metadata and other absolute URLs come out as `http://`. The quotes are required, since a bare `on` is parsed as a YAML boolean.
-
 ### 3) Build images
 `docker-compose build`
 
