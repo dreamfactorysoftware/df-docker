@@ -8,8 +8,6 @@
 # composer files in place, after building the standard image):
 #   docker build -f Dockerfile.openshift --build-arg BASE=df-docker-web:latest -t dreamfactory:7.7-openshift .
 #
-# Verified 2026-09-24 on plain Docker as `-u 123456:0` (what OpenShift does).
-# Not yet run on a live OpenShift cluster.
 
 ARG BASE=dreamfactorysoftware/df-docker:latest
 FROM ${BASE}
