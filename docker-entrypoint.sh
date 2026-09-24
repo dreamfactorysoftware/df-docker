@@ -1,6 +1,24 @@
 #!/bin/bash
 set -e
 
+# Set NAME=VALUE in .env: replace an existing (or commented-out) line, else append.
+set_env_var() {
+  if grep -q "^#\?$1=" .env; then
+    sed -i "s|^#\?$1=.*|$1=$2|" .env
+  else
+    echo "$1=$2" >> .env
+  fi
+}
+
+# df:setup enforces a 16-character minimum. With a shorter ADMIN_PASSWORD it falls
+# into an interactive prompt with no TTY and spins forever, so refuse it up front.
+require_admin_password_length() {
+  if [ -n "$ADMIN_PASSWORD" ] && [ "${#ADMIN_PASSWORD}" -lt 16 ]; then
+    echo "ERROR: ADMIN_PASSWORD must be at least 16 characters." >&2
+    exit 1
+  fi
+}
+
 # mail setup
 CONF=/etc/ssmtp/ssmtp.conf
 rm -f $CONF
@@ -29,7 +47,9 @@ sed -i 's/DF_INSTALL=.*/DF_INSTALL=Docker/' .env
 # if no servername is provided use dreamfactory.app as default
 sed -i "s;%SERVERNAME%;${SERVERNAME:=dreamfactory.app};g" /etc/nginx/sites-available/dreamfactory.conf
 
-# Allow Laravel to accept requests from top level reverse proxy if it is using HTTPS. "off" by default.
+# Tell PHP-FPM/Laravel the original request was HTTPS when a TLS-terminating
+# reverse proxy sits in front of this container (HTTPS_HEADER=on). "off" by
+# default; leaving it off behind TLS makes Laravel emit http:// absolute URLs.
 sed -i "s;%HTTPS_HEADER%;${HTTPS_HEADER:=off};g" /etc/nginx/sites-available/dreamfactory.conf
 
 # Wait for MySQL to be ready if using MySQL
@@ -121,6 +141,7 @@ if [ -n "$LICENSE" ] && [ -f "/opt/dreamfactory/license/$LICENSE/composer.lock" 
 fi
 
 # do we have first user provided in env?
+require_admin_password_length
 if [ -n "$ADMIN_EMAIL" ] && [ -n "$ADMIN_PASSWORD" ] && [ -n "$ADMIN_PHONE" ];  then
     lastExitCode=1
     echo "Setting up database and creating first admin user"
@@ -206,7 +227,9 @@ fi
 
 if [ -n "$DF_LICENSE_KEY" ]; then
   echo "Setting DF_LICENSE_KEY"
-  sed -i "s/#DF_LICENSE_KEY=/DF_LICENSE_KEY=$DF_LICENSE_KEY/" .env
+  # 7.7 .env-dist has no #DF_LICENSE_KEY= placeholder, so a plain sed matched
+  # nothing and the key was silently dropped (#124).
+  set_env_var DF_LICENSE_KEY "$DF_LICENSE_KEY"
 fi
 
 if [ -n "$SENDMAIL_DEFAULT_COMMAND" ]; then
