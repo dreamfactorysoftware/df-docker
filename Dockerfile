@@ -1,4 +1,4 @@
-FROM dreamfactorysoftware/df-base-img:7.6
+FROM dreamfactorysoftware/df-base-img:7.7
 
 # Configure Nginx
 COPY dreamfactory.conf /etc/nginx/sites-available/dreamfactory.conf
@@ -38,6 +38,12 @@ RUN composer clear-cache && \
 # Install MCP daemon Node.js dependencies (if the daemon package is present)
 RUN if [ -f /opt/dreamfactory/vendor/dreamfactory/df-mcp-server/daemon/package.json ]; then \
         cd /opt/dreamfactory/vendor/dreamfactory/df-mcp-server/daemon && \
+        npm install --production; \
+    fi
+
+# Install System API MCP daemon Node.js dependencies (if the package is present)
+RUN if [ -f /opt/dreamfactory/vendor/dreamfactory/df-system-mcp-server/package.json ]; then \
+        cd /opt/dreamfactory/vendor/dreamfactory/df-system-mcp-server && \
         npm install --production; \
     fi
 

@@ -255,6 +255,23 @@ if [ -n "$ENABLE_MCP_DAEMON" ]; then
   fi
 fi
 
+if [ -n "$ENABLE_SYSTEM_MCP_DAEMON" ]; then
+  SYSTEM_MCP_DIR="/opt/dreamfactory/vendor/dreamfactory/df-system-mcp-server"
+  if [ -f "${SYSTEM_MCP_DIR}/package.json" ]; then
+    # Ensure node_modules are installed (may be missing if vendor was updated)
+    if [ ! -d "${SYSTEM_MCP_DIR}/node_modules" ]; then
+      echo "Installing System API MCP daemon dependencies..."
+      (cd "${SYSTEM_MCP_DIR}" && npm install --production)
+    fi
+    echo "Starting System API MCP daemon..."
+    /opt/dreamfactory/vendor/dreamfactory/df-mcp-server/scripts/start-system-daemon.sh &
+    SYSTEM_MCP_DAEMON_PID=$!
+    echo "System API MCP daemon started (PID: ${SYSTEM_MCP_DAEMON_PID})"
+  else
+    echo "Warning: ENABLE_SYSTEM_MCP_DAEMON is set but df-system-mcp-server package not found"
+  fi
+fi
+
 # start php8.5-fpm
 service php8.5-fpm start
 

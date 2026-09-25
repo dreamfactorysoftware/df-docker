@@ -7,6 +7,8 @@ services:
       MYSQL_USER: df_admin
       MYSQL_PASSWORD: df_admin
     image: mysql:5.7
+    # mysql:5.7 has no arm64 image; run it emulated on Apple Silicon / ARM hosts
+    platform: linux/amd64
     volumes:
       - df-mysql:/var/lib/mysql
 
@@ -45,6 +47,7 @@ services:
 #      LOG_TO_STDOUT: "true"
       APP_DEBUG: "true"
       ENABLE_MCP_DAEMON: "true"
+      ENABLE_SYSTEM_MCP_DAEMON: "true"
 #      Uncomment and configure to enable emailing
 #      SENDMAIL_DEFAULT_COMMAND: "/usr/sbin/sendmail -t"
 #      SSMTP_root:
