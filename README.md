@@ -24,6 +24,7 @@
 
 * <a href="#prerequisites">Prerequisites</a>
 * <a href="#installation">Installation</a>
+* <a href="#environment">Environment Variables</a>
 * <a href="#licensed">DreamFactory Licensed Edition</a>
 * <a href="#persistent">Persisting Data</a>
 * <a href="#testing">Testing Data</a>
@@ -75,14 +76,50 @@ If TLS is terminated in front of the container (reverse proxy, load balancer, or
 ### 5) Access Admin UI
 Go to `127.0.0.1` in your browser. It will take some time upon building, but you will be asked to create your first admin user.
 
+<a name="environment"></a>
+## Environment Variables
+
+`docker-entrypoint.sh` copies these container environment variables into `/opt/dreamfactory/.env` on every start (php-fpm and cron do not see the container environment, so `.env` is the single source of truth). Unset variables leave the image defaults in place.
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `SERVERNAME` | `dreamfactory.app` | nginx `server_name` |
+| `HTTPS_HEADER` | `off` | set to `"on"` behind a TLS-terminating proxy so Laravel emits `https://` URLs |
+| `APP_KEY` | generated on first start | Laravel encryption key. Pin it (see [Persisting System Database Configs](#persistent)) or encrypted service credentials break when the container is re-created |
+| `DB_DRIVER` / `DB_CONNECTION` | `sqlite` | system database driver (`mysql`, `pgsql`, `sqlsrv`, `sqlite`) |
+| `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` | – | system database connection. With `DB_DRIVER=sqlite`, `DB_DATABASE` may be an absolute path (put it under `/opt/dreamfactory/storage/` so it lives in the volume); the file is created if missing |
+| `CACHE_DRIVER` | `file` | cache store, written to both `CACHE_DRIVER` (legacy) and `CACHE_STORE` (7.x) |
+| `CACHE_HOST`, `CACHE_PORT`, `CACHE_DATABASE`, `CACHE_USERNAME`, `CACHE_PASSWORD`, `CACHE_WEIGHT`, `CACHE_PERSISTENT_ID` | – | cache connection (Redis / Memcached) |
+| `REDIS_HOST`, `REDIS_PORT` | – | Redis connection for the `redis` cache/session stores |
+| `SESSION_DRIVER` | `file` | Laravel session driver |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | – | create the first admin on start (runs `df:setup --force`, so it also works with `APP_ENV=production`). `ADMIN_PASSWORD` must be at least 16 characters |
+| `ADMIN_FIRST_NAME`, `ADMIN_LAST_NAME` | – | optional admin name |
+| `ADMIN_PHONE` | `not-provided` | optional admin phone (required by `df:setup`, defaulted when omitted) |
+| `PACKAGE` | – | path/URL of a `.dfpkg` to import after `df:setup` |
+| `LICENSE` | – | tier name under `/opt/dreamfactory/license/<tier>/composer.*` to install at start (needs internet) |
+| `DF_LICENSE_KEY` | – | commercial license key |
+| `DF_REGISTER_CONTACT` | – | registration contact e-mail |
+| `DF_INSTALL` | `Docker` | install type reported to `/status`, `system/environment` and the fresh-instance phone-home. Images built for other channels bake their own value (e.g. `docker_trial`) |
+| `DF_TRIAL_TOKEN` | – | **trial image only:** signed trial token from your dashboard at https://portal.dreamfactory.com. No effect on this image |
+| `DF_TRIAL_PORTAL_URL`, `DF_IS_TRIAL`, `DF_TRIAL_HEARTBEAT` | – | **trial image only:** heartbeat target, trial flag, heartbeat on/off. Passed through to `.env` when set; no effect on this image |
+| `JWT_TTL`, `JWT_REFRESH_TTL`, `ALLOW_FOREVER_SESSIONS` | – | session token lifetimes (`DF_JWT_TTL`, ...) |
+| `APP_LOG_LEVEL` | `warning` | Laravel log level |
+| `LOG_TO_STDOUT` | – | also tail `storage/logs/dreamfactory.log` to the container output |
+| `EXTERNAL_IP` | – | public IP/hostname for generated URLs |
+| `LOGSDB_HOST`, `LOGSDB_PORT`, `LOGSDB_DATABASE`, `LOGSDB_USERNAME`, `LOGSDB_PASSWORD`, `LOGSDB_ENABLED` | – | Logs DB (MongoDB) for the logger service |
+| `SENDMAIL_DEFAULT_COMMAND`, `SSMTP_*` | – | outbound mail via ssmtp (`SSMTP_mailhub`, `SSMTP_AuthUser`, ...) |
+| `ENABLE_MCP_DAEMON`, `ENABLE_SYSTEM_MCP_DAEMON` | – | start the MCP daemons (`df-mcp-server`, `df-system-mcp-server`) |
+
+On start the entrypoint also recreates the `storage/` directory tree (`app`, `logs`, `databases`, `framework/{cache,sessions,views}`) when the mounted volume is empty, creates the sqlite file when `DB_CONNECTION=sqlite`, and fixes ownership to `www-data`.
+
 <a name="licensed"></a>
 ## Running a Licensed Instance
 
 ### 1) Add the license files to the `df-docker` directory
 
-### 2) Uncomment lines 25 and 36 of `Dockerfile`
+### 2) Uncomment the `COPY composer.*` and `composer config --global --auth` lines of `Dockerfile` (lines 25 and 28) and put your GitHub access key in the latter
 
-### 3) Add the License Key to line 36 of `Dockerfile`
+### 3) Uncomment the `DF_LICENSE_KEY` line near the end of `Dockerfile` (line 51) and add your license key
 
 ### 4) Build images
 `docker compose build`
