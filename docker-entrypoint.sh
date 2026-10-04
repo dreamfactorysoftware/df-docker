@@ -77,7 +77,9 @@ set_env_var DF_INSTALL "${DF_INSTALL:-Docker}"
 
 # Trial image settings (dreamfactory/df-trial reads them from .env). Never set on the
 # public image, where this loop is a no-op. The token value is deliberately not echoed.
-trial_vars=("DF_TRIAL_TOKEN" "DF_TRIAL_PORTAL_URL" "DF_IS_TRIAL" "DF_TRIAL_HEARTBEAT")
+# DF_TRIAL_PROXY: outbound proxy for the heartbeat on firewalled hosts (php-fpm and cron never
+# see HTTPS_PROXY from the container environment, so it has to travel through .env too).
+trial_vars=("DF_TRIAL_TOKEN" "DF_TRIAL_PORTAL_URL" "DF_IS_TRIAL" "DF_TRIAL_HEARTBEAT" "DF_TRIAL_PROXY")
 for var in "${trial_vars[@]}"
 do
   if [ -n "${!var}" ]; then

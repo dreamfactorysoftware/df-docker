@@ -101,7 +101,7 @@ Go to `127.0.0.1` in your browser. It will take some time upon building, but you
 | `DF_REGISTER_CONTACT` | – | registration contact e-mail |
 | `DF_INSTALL` | `Docker` | install type reported to `/status`, `system/environment` and the fresh-instance phone-home. Images built for other channels bake their own value (e.g. `docker_trial`) |
 | `DF_TRIAL_TOKEN` | – | **trial image only:** signed trial token from your dashboard at https://portal.dreamfactory.com. No effect on this image |
-| `DF_TRIAL_PORTAL_URL`, `DF_IS_TRIAL`, `DF_TRIAL_HEARTBEAT` | – | **trial image only:** heartbeat target, trial flag, heartbeat on/off. Passed through to `.env` when set; no effect on this image |
+| `DF_TRIAL_PORTAL_URL`, `DF_IS_TRIAL`, `DF_TRIAL_HEARTBEAT`, `DF_TRIAL_PROXY` | – | **trial image only:** heartbeat target, trial flag, heartbeat on/off, outbound proxy for the heartbeat (e.g. `http://proxy.corp:3128`). Passed through to `.env` when set; no effect on this image |
 | `JWT_TTL`, `JWT_REFRESH_TTL`, `ALLOW_FOREVER_SESSIONS` | – | session token lifetimes (`DF_JWT_TTL`, ...) |
 | `APP_LOG_LEVEL` | `warning` | Laravel log level |
 | `LOG_TO_STDOUT` | – | also tail `storage/logs/dreamfactory.log` to the container output |
