@@ -2,12 +2,41 @@
 set -e
 
 # Set NAME=VALUE in .env: replace an existing (or commented-out) line, else append.
+# The value is escaped for sed's replacement side (\ | &) so signed tokens, URLs with
+# query strings and passwords survive verbatim.
 set_env_var() {
+  local escaped
+  escaped=$(printf '%s' "$2" | sed -e 's/[\\|&]/\\&/g')
   if grep -q "^#\?$1=" .env; then
-    sed -i "s|^#\?$1=.*|$1=$2|" .env
+    sed -i "s|^#\?$1=.*|$1=$escaped|" .env
   else
     echo "$1=$2" >> .env
   fi
+}
+
+# Print NAME's value from .env (empty when absent or commented out); strips one layer of quotes.
+env_file_get() {
+  sed -n "s/^$1=//p" .env | tail -n 1 | sed -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/"
+}
+
+# storage/ is a named volume in every compose file we ship and a freshly created volume is
+# EMPTY: until these directories exist every request 500s and a sqlite system DB cannot be
+# opened. Recreate the tree (and the sqlite file) before anything touches the database.
+ensure_storage_tree() {
+  mkdir -p storage/app storage/databases storage/logs storage/scripting storage/wsdl \
+           storage/framework/cache/data storage/framework/sessions storage/framework/views \
+           bootstrap/cache
+  if [ "$(env_file_get DB_CONNECTION)" = "sqlite" ]; then
+    local db
+    db=$(env_file_get DB_DATABASE)
+    case "$db" in
+      ":memory:") ;;
+      "")   [ -e database/database.sqlite ] || touch database/database.sqlite ;;   # Laravel default path
+      */*)  [ -e "$db" ] || { mkdir -p "$(dirname "$db")" && touch "$db"; } ;;
+      *)    [ -e "storage/databases/$db" ] || touch "storage/databases/$db" ;;    # bare name: df-core relocates it here
+    esac
+  fi
+  chown -R www-data:www-data storage bootstrap/cache
 }
 
 # df:setup enforces a 16-character minimum. With a shorter ADMIN_PASSWORD it falls
@@ -41,7 +70,23 @@ sed -i "s/pm.max_spare_servers = 3/pm.max_spare_servers = 200/" /etc/php/8.5/fpm
 sed -i "s/pm = dynamic/pm = ondemand/" /etc/php/8.5/fpm/pool.d/www.conf && \
 sed -i "s/worker_connections 768;/worker_connections 2048;/" /etc/nginx/nginx.conf && \
 sed -i "s/keepalive_timeout 65;/keepalive_timeout 10;/" /etc/nginx/nginx.conf
-sed -i 's/DF_INSTALL=.*/DF_INSTALL=Docker/' .env
+# Install type reported to /status, system/environment and the fresh-instance phone-home.
+# "Docker" unless the image (or the user) sets DF_INSTALL, e.g. docker_trial for the trial
+# image. php-fpm clears the process environment, so the value has to live in .env.
+set_env_var DF_INSTALL "${DF_INSTALL:-Docker}"
+
+# Trial image settings (dreamfactory/df-trial reads them from .env). Never set on the
+# public image, where this loop is a no-op. The token value is deliberately not echoed.
+# DF_TRIAL_PROXY: outbound proxy for the heartbeat on firewalled hosts (php-fpm and cron never
+# see HTTPS_PROXY from the container environment, so it has to travel through .env too).
+trial_vars=("DF_TRIAL_TOKEN" "DF_TRIAL_PORTAL_URL" "DF_IS_TRIAL" "DF_TRIAL_HEARTBEAT" "DF_TRIAL_PROXY")
+for var in "${trial_vars[@]}"
+do
+  if [ -n "${!var}" ]; then
+    echo "Setting ${var}"
+    set_env_var "${var}" "${!var}"
+  fi
+done
 
 # update site configuration
 # if no servername is provided use dreamfactory.app as default
@@ -55,7 +100,7 @@ sed -i "s;%HTTPS_HEADER%;${HTTPS_HEADER:=off};g" /etc/nginx/sites-available/drea
 # Wait for MySQL to be ready if using MySQL
 if [ "$DB_CONNECTION" = "mysql" ]; then
     echo "Waiting for MySQL to be ready..."
-    for i in {1..30}; do
+    for _ in {1..30}; do
         if mysql -h"$DB_HOST" -u"$DB_USERNAME" -p"$DB_PASSWORD" -e "SELECT 1" >/dev/null 2>&1; then
             echo "MySQL is ready"
             break
@@ -76,6 +121,9 @@ if [ -n "$CACHE_DRIVER" ]; then
   sed -i "s/#CACHE_HOST=/CACHE_HOST=$CACHE_HOST/" .env
   sed -i "s/#CACHE_DATABASE=2/CACHE_DATABASE=$CACHE_DATABASE/" .env
   sed -i "s/CACHE_DRIVER=file/CACHE_DRIVER=$CACHE_DRIVER/" .env
+  # 7.x .env-dist and config/cache.php read CACHE_STORE, not CACHE_DRIVER; without this
+  # line the compose Redis settings were written but silently ignored (file cache stayed on).
+  set_env_var CACHE_STORE "$CACHE_DRIVER"
 fi
 
 if [ -n "$CACHE_PORT" ]; then
@@ -106,17 +154,24 @@ fi
 # do we have configs for an external DB ?
 if [ -n "$DB_DRIVER" ]; then
   echo "Setting DB_DRIVER, DB_HOST, DB_USERNAME, DB_PASSWORD, and DB_DATABASE"
-  sed -i "s/DB_CONNECTION=sqlite/DB_CONNECTION=$DB_DRIVER/" .env
-  sed -i "s/#DB_HOST=/DB_HOST=$DB_HOST/" .env
-  sed -i "s/#DB_USERNAME=/DB_USERNAME=$DB_USERNAME/" .env
-  sed -i "s/#DB_PASSWORD=/DB_PASSWORD=$DB_PASSWORD/" .env
-  sed -i "s/#DB_DATABASE=/DB_DATABASE=$DB_DATABASE/" .env
+  # set_env_var (not a bare sed) so values with "/" work, e.g. DB_DRIVER=sqlite with an
+  # absolute DB_DATABASE path inside the storage volume.
+  set_env_var DB_CONNECTION "$DB_DRIVER"
+  db_vars=("DB_HOST" "DB_USERNAME" "DB_PASSWORD" "DB_DATABASE")
+  for var in "${db_vars[@]}"
+  do
+    if [ -n "${!var}" ]; then
+      set_env_var "${var}" "${!var}"
+    fi
+  done
 fi
 
 if [ -n "$DB_PORT" ] && [[ $DB_PORT != *":"* ]]; then
   echo "Setting DB_PORT"
-  sed -i "s/#DB_PORT=/DB_PORT=$DB_PORT/" .env
+  set_env_var DB_PORT "$DB_PORT"
 fi
+
+ensure_storage_tree
 
 # do we have an existing APP_KEY we should reuse ?
 if [ -n "$APP_KEY" ]; then
@@ -135,26 +190,33 @@ if [ -n "$LICENSE" ] && [ -f "/opt/dreamfactory/license/$LICENSE/composer.lock" 
     echo "Installing $LICENSE packages..."
     cp /opt/dreamfactory/license/"$LICENSE"/composer.* /opt/dreamfactory
     composer install --no-dev --ignore-platform-reqs
-    php artisan migrate --seed
+    php artisan migrate --seed --force
     php artisan cache:clear
     php artisan config:clear
 fi
 
 # do we have first user provided in env?
 require_admin_password_length
-if [ -n "$ADMIN_EMAIL" ] && [ -n "$ADMIN_PASSWORD" ] && [ -n "$ADMIN_PHONE" ];  then
+if [ -n "$ADMIN_EMAIL" ] && [ -n "$ADMIN_PASSWORD" ]; then
+    # df:setup requires a phone number but nothing else does; default it so a signup form
+    # that only asked for email + password can still bootstrap the first admin.
+    ADMIN_PHONE="${ADMIN_PHONE:-not-provided}"
     lastExitCode=1
     echo "Setting up database and creating first admin user"
     while [ "$lastExitCode" != 0 ] ; do
+        # --force: with APP_ENV=production (the trial image) migrate/db:seed would otherwise ask
+        # for confirmation, get "Command cancelled" without a TTY and leave the DB empty.
         if [ -n "$ADMIN_FIRST_NAME" ] && [ -n "$ADMIN_LAST_NAME" ]; then
-            output=$(php artisan df:setup --admin_email $ADMIN_EMAIL --admin_password $ADMIN_PASSWORD --admin_first_name $ADMIN_FIRST_NAME --admin_last_name $ADMIN_LAST_NAME --admin_phone $ADMIN_PHONE)
+            output=$(php artisan df:setup --force --admin_email "$ADMIN_EMAIL" --admin_password "$ADMIN_PASSWORD" --admin_first_name "$ADMIN_FIRST_NAME" --admin_last_name "$ADMIN_LAST_NAME" --admin_phone "$ADMIN_PHONE")
         else
-            output=$(php artisan df:setup --admin_email $ADMIN_EMAIL --admin_password $ADMIN_PASSWORD --admin_phone $ADMIN_PHONE)
+            output=$(php artisan df:setup --force --admin_email "$ADMIN_EMAIL" --admin_password "$ADMIN_PASSWORD" --admin_phone "$ADMIN_PHONE")
         fi
 
         if [[ "$output" != *"SQLSTATE[HY000]"* ]] && [[ "$output" != *"No suitable servers found"* ]]; then
             lastExitCode=0
         else
+            # Show the reason: a missing table or a wrong credential looks exactly like "not ready yet".
+            echo "$output" | grep -E "SQLSTATE|No suitable servers" | head -n 2 >&2
             echo "Database connection failed. Wait 5 seconds and retry..."
             sleep 5s
         fi
@@ -165,7 +227,7 @@ if [ -n "$ADMIN_EMAIL" ] && [ -n "$ADMIN_PASSWORD" ] && [ -n "$ADMIN_PHONE" ];  
     # Do we have a package to import?
     if [ -n "$PACKAGE" ]; then
       echo "Importing package $PACKAGE"
-      php artisan df:import-pkg $PACKAGE --delete
+      php artisan df:import-pkg "$PACKAGE" --delete
     fi
 fi
 
@@ -275,8 +337,16 @@ fi
 # start php8.5-fpm
 service php8.5-fpm start
 
-# start cron service for df-scheduler
+# start cron service for df-scheduler (and /etc/cron.d/df-trial on the trial image)
 service cron start
+
+# Trial image: one best-effort heartbeat at boot; the daily one is cron's job. Runs as
+# www-data so any file it creates under storage/ stays writable by php-fpm. Only when the
+# dreamfactory/df-trial package is installed, so the public image never shells out here.
+if [ -n "$DF_TRIAL_TOKEN" ] && php artisan list --raw 2>/dev/null | grep -qE '^df:trial( |$)'; then
+  echo "Sending trial heartbeat"
+  runuser -u www-data -- php artisan df:trial heartbeat >/dev/null 2>&1 &
+fi
 
 # start nginx
 exec /usr/sbin/nginx -g "daemon off;"
