@@ -48,6 +48,154 @@ require_admin_password_length() {
   fi
 }
 
+# ---- Trial image (DF_INSTALL=docker_trial) only: volume reuse protection -----------------------
+# Every trial's compose file names the same container and volume (dreamfactory-trial,
+# dreamfactory-trial-storage), so starting a second trial on a machine that ran an earlier one
+# mounts the earlier trial's storage: its sqlite system DB (with ITS admin user) and service
+# credentials encrypted with ITS APP_KEY. df:setup only creates the admin on an empty DB, so the
+# new trial's ADMIN_EMAIL/ADMIN_PASSWORD were silently ignored and the login from the dashboard
+# failed. These two helpers make that situation work (admin) and visible (APP_KEY).
+
+# The sha256 of the APP_KEY this volume was first booted with. Kept in storage/databases/ (inside
+# the volume, but outside storage/app/, which the "files" service exposes over the API).
+TRIAL_APP_KEY_HASH_FILE=storage/databases/.df-trial-app-key.sha256
+
+# trial_app_key_guard FILE APP_KEY
+# First boot of a volume: record sha256(APP_KEY) in FILE (0600 www-data). Later boots: if APP_KEY
+# changed, print a prominent warning. Never refuses to boot. Sets TRIAL_APP_KEY_STATE to
+# recorded | match | mismatch | nokey.
+trial_app_key_guard() {
+  local file="$1" key="$2" current stored
+  TRIAL_APP_KEY_STATE=nokey
+  [ -n "$key" ] || return 0
+  current=$(printf '%s' "$key" | sha256sum | cut -d' ' -f1)
+  if [ ! -s "$file" ]; then
+    mkdir -p "$(dirname "$file")"
+    ( umask 077; printf '%s\n' "$current" > "$file" )
+    chown www-data:www-data "$file" 2>/dev/null || true
+    chmod 600 "$file"
+    TRIAL_APP_KEY_STATE=recorded
+    echo "Trial: recorded the APP_KEY fingerprint for this storage volume"
+    return 0
+  fi
+  stored=$(head -n 1 "$file" | tr -d '[:space:]')
+  if [ "$stored" = "$current" ]; then
+    TRIAL_APP_KEY_STATE=match
+    return 0
+  fi
+  TRIAL_APP_KEY_STATE=mismatch
+  cat >&2 <<'WARN'
+************************************************************************************************
+* WARNING: this storage volume was created with a DIFFERENT APP_KEY.
+*
+* The volume mounted at /opt/dreamfactory/storage (normally "dreamfactory-trial-storage") belongs
+* to a different DreamFactory trial or installation than the APP_KEY this container was started
+* with. Users, roles and services from that earlier instance are still in its system database,
+* and any encrypted service credentials (database passwords, API keys, ...) stored there will NOT
+* decrypt with the new APP_KEY: those services will fail until they are re-entered.
+*
+* To fix it, either:
+*   - start the container with the ORIGINAL compose file / docker run command of the trial that
+*     created this volume, or
+*   - start the new trial on its own storage:
+*       docker rm -f dreamfactory-trial
+*       docker volume rm dreamfactory-trial-storage    (DELETES the earlier trial's data)
+*     then run the new trial's compose file / docker run command again.
+*
+* The container keeps running; the new trial's admin user is created if it is missing.
+************************************************************************************************
+WARN
+}
+
+# trial_ensure_admin: make sure ADMIN_EMAIL is an active system admin in the system DB.
+# Missing -> created exactly like df:setup does (User::createFirstAdmin, same validation and
+# password hashing). Existing -> its password is left alone (the user may have changed it); only
+# is_active / is_sys_admin are set. The password travels in the environment, never on a command
+# line and never into the log. Best effort: a failure is logged and boot continues.
+trial_ensure_admin() {
+  local out
+  if ! out=$(ADMIN_FIRST_NAME="${ADMIN_FIRST_NAME:-}" ADMIN_LAST_NAME="${ADMIN_LAST_NAME:-}" \
+             ADMIN_PHONE="${ADMIN_PHONE:-not-provided}" php -d display_errors=stderr 2>&1 <<'PHP'
+<?php
+  require 'vendor/autoload.php';
+  $app = require 'bootstrap/app.php';
+  $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+
+  use DreamFactory\Core\Models\User;
+
+  $email = (string) getenv('ADMIN_EMAIL');
+  $password = (string) getenv('ADMIN_PASSWORD');
+  $user = User::whereRaw('LOWER(email) = ?', [strtolower($email)])->first();
+  if ($user) {
+      $fix = [];
+      if (!$user->is_active) {
+          $fix['is_active'] = 1;
+      }
+      if (!$user->is_sys_admin) {
+          $fix['is_sys_admin'] = 1;
+      }
+      if ($fix) {
+          // Query-builder update: no model events, the password hash is never touched.
+          User::whereKey($user->getKey())->update($fix);
+      }
+      User::resetAdminExists();
+      echo 'RESULT existing ' . ($fix ? implode('+', array_keys($fix)) : 'unchanged') . PHP_EOL;
+      exit(0);
+  }
+  $others = User::where('is_sys_admin', 1)->count();
+  $first = (string) getenv('ADMIN_FIRST_NAME') ?: 'FirstName';
+  $last = (string) getenv('ADMIN_LAST_NAME') ?: 'LastName';
+  try {
+      User::createFirstAdmin([
+          'first_name' => $first,
+          'last_name' => $last,
+          'name' => $first . ' ' . $last,
+          'email' => $email,
+          'password' => $password,
+          'password_confirmation' => $password,
+          'phone' => (string) getenv('ADMIN_PHONE') ?: 'not-provided',
+      ]);
+  } catch (Illuminate\Validation\ValidationException $e) {
+      echo 'RESULT failed ' . implode(' ', $e->validator->errors()->all()) . PHP_EOL;
+      exit(1);
+  }
+  echo 'RESULT created ' . $others . PHP_EOL;
+PHP
+  ); then
+    echo "Trial: WARNING could not ensure the admin user $ADMIN_EMAIL: $(printf '%s' "$out" | grep -v -F -- "$ADMIN_PASSWORD" | tail -n 3 | tr '\n' ' ')" >&2
+    return 0
+  fi
+  local result
+  result=$(printf '%s\n' "$out" | sed -n 's/^RESULT //p' | tail -n 1)
+  case "$result" in
+    "existing unchanged")
+      echo "Trial: admin user $ADMIN_EMAIL exists (active system admin; password left unchanged)" ;;
+    existing\ *)
+      echo "Trial: admin user $ADMIN_EMAIL exists; set ${result#existing } (password left unchanged)" ;;
+    "created 0")
+      echo "Trial: created system admin $ADMIN_EMAIL" ;;
+    created\ *)
+      echo "Trial: created system admin $ADMIN_EMAIL (this volume already had ${result#created } other system admin(s) from an earlier instance)"
+      if [ "${TRIAL_APP_KEY_STATE:-}" = recorded ]; then
+        # A volume set up by an image that predates the APP_KEY fingerprint: the key it was
+        # created with is unknown, but an admin other than this trial's means another instance.
+        cat >&2 <<'WARN'
+************************************************************************************************
+* WARNING: this storage volume was already set up by a DIFFERENT DreamFactory instance (its system
+* database has another admin user, and no record of the APP_KEY it was created with).
+* If it belongs to an earlier trial, encrypted service credentials stored there will not decrypt
+* with this trial's APP_KEY. To start this trial on its own storage:
+*     docker rm -f dreamfactory-trial
+*     docker volume rm dreamfactory-trial-storage    (DELETES the earlier instance's data)
+* then run this trial's compose file / docker run command again.
+************************************************************************************************
+WARN
+      fi ;;
+    *)
+      echo "Trial: WARNING unexpected result while ensuring admin user $ADMIN_EMAIL: $(printf '%s' "$out" | grep -v -F -- "$ADMIN_PASSWORD" | tail -n 3 | tr '\n' ' ')" >&2 ;;
+  esac
+}
+
 # mail setup
 CONF=/etc/ssmtp/ssmtp.conf
 rm -f $CONF
@@ -175,7 +323,11 @@ ensure_storage_tree
 
 # do we have an existing APP_KEY we should reuse ?
 if [ -n "$APP_KEY" ]; then
-  echo "Setting APP_KEY=$APP_KEY from environment"
+  if [ "${DF_INSTALL:-}" = "docker_trial" ]; then
+    echo "Setting APP_KEY from environment"   # trial logs end up in support tickets: no secret
+  else
+    echo "Setting APP_KEY=$APP_KEY from environment"
+  fi
   sed -i "s#APP_KEY=.*#APP_KEY=$APP_KEY#" .env
 else
   # generate AppKey on first run
@@ -184,6 +336,11 @@ else
     php artisan key:generate
     touch .first_run_done
   fi
+fi
+
+# Trial image: fingerprint the APP_KEY this storage volume belongs to (warns on a foreign volume).
+if [ "${DF_INSTALL:-}" = "docker_trial" ]; then
+  trial_app_key_guard "$TRIAL_APP_KEY_HASH_FILE" "$(env_file_get APP_KEY)"
 fi
 
 if [ -n "$LICENSE" ] && [ -f "/opt/dreamfactory/license/$LICENSE/composer.lock" ]; then
@@ -229,6 +386,13 @@ if [ -n "$ADMIN_EMAIL" ] && [ -n "$ADMIN_PASSWORD" ]; then
       echo "Importing package $PACKAGE"
       php artisan df:import-pkg "$PACKAGE" --delete
     fi
+fi
+
+# Trial image: df:setup above only creates the admin on an EMPTY system DB. When the storage volume
+# already holds a database (a restart, or another trial's volume), make sure THIS trial's admin
+# exists and is an active system admin, on every boot.
+if [ "${DF_INSTALL:-}" = "docker_trial" ] && [ -n "$ADMIN_EMAIL" ] && [ -n "$ADMIN_PASSWORD" ]; then
+  trial_ensure_admin
 fi
 
 chown -R www-data:www-data storage/
