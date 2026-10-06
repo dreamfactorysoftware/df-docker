@@ -340,12 +340,17 @@ service php8.5-fpm start
 # start cron service for df-scheduler (and /etc/cron.d/df-trial on the trial image)
 service cron start
 
-# Trial image: one best-effort heartbeat at boot; the daily one is cron's job. Runs as
-# www-data so any file it creates under storage/ stays writable by php-fpm. Only when the
-# dreamfactory/df-trial package is installed, so the public image never shells out here.
-if [ -n "$DF_TRIAL_TOKEN" ] && php artisan list --raw 2>/dev/null | grep -qE '^df:trial( |$)'; then
-  echo "Sending trial heartbeat"
-  runuser -u www-data -- php artisan df:trial heartbeat >/dev/null 2>&1 &
+# Trial image: one best-effort heartbeat on EVERY container start (cron sends the hourly ones,
+# /etc/cron.d/df-trial). It also carries the portal's signed revocation, so a revoked trial locks
+# as soon as it is restarted. Detached in the background so it never delays boot (nginx is exec'd
+# right away; the heartbeat has a 3 s HTTP timeout and fails silently). Not gated on DF_TRIAL_TOKEN in
+# the container environment: the token may live only in /opt/dreamfactory/.env (the package
+# reads it from there and skips quietly when there is none). Runs as www-data so any file it
+# creates under storage/ stays writable by php-fpm. Only when the dreamfactory/df-trial package
+# is installed (a file test, no PHP), so the public image never shells out here.
+if [ -f /opt/dreamfactory/vendor/dreamfactory/df-trial/composer.json ]; then
+  echo "Sending trial heartbeat (background)"
+  ( cd /opt/dreamfactory && runuser -u www-data -- php artisan df:trial heartbeat >/dev/null 2>&1 ) </dev/null >/dev/null 2>&1 &
 fi
 
 # start nginx
