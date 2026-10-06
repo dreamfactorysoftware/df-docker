@@ -90,9 +90,10 @@ trial_app_key_guard() {
 * WARNING: this storage volume was created with a DIFFERENT APP_KEY.
 *
 * The volume mounted at /opt/dreamfactory/storage belongs to a different DreamFactory trial or
-* installation than the APP_KEY this container was started with. Users, roles and services from that earlier instance are still in its system database,
-* and any encrypted service credentials (database passwords, API keys, ...) stored there will NOT
-* decrypt with the new APP_KEY: those services will fail until they are re-entered.
+* installation than the APP_KEY this container was started with. Users, roles and services from
+* that earlier instance are still in its system database, and any encrypted service credentials
+* (database passwords, API keys, ...) stored there will NOT decrypt with the new APP_KEY: those
+* services will fail until they are re-entered.
 *
 * To fix it, either:
 *   - start the container with the ORIGINAL compose file / docker run command of the trial that
