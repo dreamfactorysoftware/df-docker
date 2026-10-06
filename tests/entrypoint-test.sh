@@ -96,6 +96,7 @@ trial_app_key_guard "$TRIAL_APP_KEY_HASH_FILE" "$keyA" >/dev/null 2>&1; [ "$TRIA
 out=$(trial_app_key_guard "$TRIAL_APP_KEY_HASH_FILE" "$keyB" 2>&1)
 case "$out" in *"WARNING: this storage volume was created with a DIFFERENT APP_KEY"*) ;; *) fail "different key must warn";; esac
 case "$out" in *"$keyB"*|*"$keyA"*) fail "warning must not print a key";; esac
+case "$out" in *"volume rm dreamfactory-trial-storage"*) fail "warning must not tell a per-trial-volume user to delete the legacy shared volume";; esac
 trial_app_key_guard "$TRIAL_APP_KEY_HASH_FILE" "$keyB" >/dev/null 2>&1 || fail "mismatch must not fail the boot"
 [ "$TRIAL_APP_KEY_STATE" = mismatch ] || fail "different key -> mismatch"
 [ "$(head -n1 "$TRIAL_APP_KEY_HASH_FILE")" = "$(printf '%s' "$keyA" | sha256sum | cut -d' ' -f1)" ] || fail "mismatch must keep the ORIGINAL fingerprint (warn on every boot)"
@@ -113,6 +114,7 @@ PHP_STUB_OUT='RESULT existing is_active+is_sys_admin'; out=$(trial_ensure_admin 
 case "$out" in *"set is_active+is_sys_admin"*) ;; *) fail "existing+fixed line: $out";; esac
 TRIAL_APP_KEY_STATE=recorded PHP_STUB_OUT='RESULT created 1'; out=$(trial_ensure_admin 2>&1)
 case "$out" in *"1 other system admin"*"already set up by a DIFFERENT DreamFactory instance"*) ;; *) fail "legacy volume warning: $out";; esac
+case "$out" in *"volume rm dreamfactory-trial-storage"*) fail "older-volume warning must not name the legacy volume for deletion";; esac
 TRIAL_APP_KEY_STATE=match PHP_STUB_OUT='RESULT created 1'; out=$(trial_ensure_admin 2>&1)
 case "$out" in *"DIFFERENT DreamFactory instance"*) fail "legacy warning only when the fingerprint was just recorded";; esac
 PHP_STUB_RC=1 PHP_STUB_OUT="boom with $ADMIN_PASSWORD inside"; out=$(trial_ensure_admin 2>&1) || fail "php failure must not fail the boot"

@@ -49,9 +49,10 @@ require_admin_password_length() {
 }
 
 # ---- Trial image (DF_INSTALL=docker_trial) only: volume reuse protection -----------------------
-# Every trial's compose file names the same container and volume (dreamfactory-trial,
-# dreamfactory-trial-storage), so starting a second trial on a machine that ran an earlier one
-# mounts the earlier trial's storage: its sqlite system DB (with ITS admin user) and service
+# Trials created before 2026-10-06 all used the same volume (dreamfactory-trial-storage; newer
+# ones get dreamfactory-trial-<id>), and any compose file or docker run line can be edited to
+# point at another volume, so a second trial on a machine that ran an earlier one can mount the
+# earlier trial's storage: its sqlite system DB (with ITS admin user) and service
 # credentials encrypted with ITS APP_KEY. df:setup only creates the admin on an empty DB, so the
 # new trial's ADMIN_EMAIL/ADMIN_PASSWORD were silently ignored and the login from the dashboard
 # failed. These two helpers make that situation work (admin) and visible (APP_KEY).
@@ -88,19 +89,19 @@ trial_app_key_guard() {
 ************************************************************************************************
 * WARNING: this storage volume was created with a DIFFERENT APP_KEY.
 *
-* The volume mounted at /opt/dreamfactory/storage (normally "dreamfactory-trial-storage") belongs
-* to a different DreamFactory trial or installation than the APP_KEY this container was started
-* with. Users, roles and services from that earlier instance are still in its system database,
+* The volume mounted at /opt/dreamfactory/storage belongs to a different DreamFactory trial or
+* installation than the APP_KEY this container was started with. Users, roles and services from that earlier instance are still in its system database,
 * and any encrypted service credentials (database passwords, API keys, ...) stored there will NOT
 * decrypt with the new APP_KEY: those services will fail until they are re-entered.
 *
 * To fix it, either:
 *   - start the container with the ORIGINAL compose file / docker run command of the trial that
 *     created this volume, or
-*   - start the new trial on its own storage:
-*       docker rm -f dreamfactory-trial
-*       docker volume rm dreamfactory-trial-storage    (DELETES the earlier trial's data)
-*     then run the new trial's compose file / docker run command again.
+*   - start the new trial on its own storage: run "docker rm -f dreamfactory-trial", then the
+*     compose file / docker run command from the new trial's dashboard (each trial created
+*     since 2026-10-06 names its own volume, dreamfactory-trial-<id>). Old trial volumes are
+*     listed by "docker volume ls --filter name=dreamfactory-trial"; "docker volume rm <name>"
+*     DELETES that trial's data.
 *
 * The container keeps running; the new trial's admin user is created if it is missing.
 ************************************************************************************************
@@ -184,10 +185,11 @@ PHP
 * WARNING: this storage volume was already set up by a DIFFERENT DreamFactory instance (its system
 * database has another admin user, and no record of the APP_KEY it was created with).
 * If it belongs to an earlier trial, encrypted service credentials stored there will not decrypt
-* with this trial's APP_KEY. To start this trial on its own storage:
-*     docker rm -f dreamfactory-trial
-*     docker volume rm dreamfactory-trial-storage    (DELETES the earlier instance's data)
-* then run this trial's compose file / docker run command again.
+* with this trial's APP_KEY. To start this trial on its own storage, run
+* "docker rm -f dreamfactory-trial", then the compose file / docker run command from this trial's
+* dashboard (trials created since 2026-10-06 name their own volume, dreamfactory-trial-<id>).
+* "docker volume ls --filter name=dreamfactory-trial" lists the volumes; "docker volume rm <name>"
+* DELETES that instance's data.
 ************************************************************************************************
 WARN
       fi ;;
