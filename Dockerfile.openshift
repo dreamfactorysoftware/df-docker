@@ -1,0 +1,57 @@
+# DreamFactory on OpenShift: non-root image and runtime configuration.
+#
+# Extends the standard df-docker image so it runs under OpenShift's
+# `restricted` / `restricted-v2` SCC: arbitrary non-root UID, GID 0,
+# no privileged ports, no chown at runtime.
+#
+# Build (from a df-docker checkout that already has your commercial
+# composer files in place, after building the standard image):
+#   docker build -f Dockerfile.openshift --build-arg BASE=df-docker-web:latest -t dreamfactory:7.7-openshift .
+#
+
+ARG BASE=dreamfactorysoftware/df-docker:latest
+FROM ${BASE}
+
+USER root
+
+# PHP version is discovered at build time; the 7.7 entrypoint defaults to 8.3 if unset.
+RUN PHPV=$(ls /etc/php | sort -V | tail -1) && echo "$PHPV" > /etc/php-version && echo "PHP $PHPV"
+ENV PHP_VERSION=8.5
+
+# 1. nginx: unprivileged port, writable pid/temp paths, no user directive
+RUN sed -i 's/listen 80;/listen 8080;/' /etc/nginx/sites-available/dreamfactory.conf \
+ && sed -i 's|^pid /run/nginx.pid;|pid /tmp/nginx.pid;|' /etc/nginx/nginx.conf \
+ && sed -i 's/^user www-data;/# user directive removed: non-root/' /etc/nginx/nginx.conf \
+ && sed -i '/^http {/a \    client_body_temp_path /tmp/nginx-client-body;\n    proxy_temp_path /tmp/nginx-proxy;\n    fastcgi_temp_path /tmp/nginx-fastcgi;\n    uwsgi_temp_path /tmp/nginx-uwsgi;\n    scgi_temp_path /tmp/nginx-scgi;' /etc/nginx/nginx.conf
+
+# 2. php-fpm: cannot switch user when not root, so drop user/group and use a writable socket path
+RUN PHPV=$(cat /etc/php-version) \
+ && sed -i 's/^user = www-data/; user = (non-root)/; s/^group = www-data/; group = (non-root)/' /etc/php/$PHPV/fpm/pool.d/www.conf \
+ && sed -i "s|^listen = /run/php/php$PHPV-fpm.sock|listen = /var/tmp/php-fpm.sock|" /etc/php/$PHPV/fpm/pool.d/www.conf \
+ && sed -i 's/^;\?listen.owner = .*/;listen.owner/; s/^;\?listen.group = .*/;listen.group/' /etc/php/$PHPV/fpm/pool.d/www.conf \
+ && sed -i 's|^pid = .*|pid = /tmp/php-fpm.pid|; s|^error_log = .*|error_log = /proc/self/fd/2|' /etc/php/$PHPV/fpm/php-fpm.conf \
+ && sed -i "s|unix:/var/run/php/php[^;]*-fpm.sock|unix:/var/tmp/php-fpm.sock|g; s|unix:/run/php/php[^;]*-fpm.sock|unix:/var/tmp/php-fpm.sock|g" /etc/nginx/sites-available/dreamfactory.conf \
+ && grep -q "unix:/var/tmp/php-fpm.sock" /etc/nginx/sites-available/dreamfactory.conf
+
+# 3. Group-0 ownership on everything written at runtime. OpenShift assigns a random UID
+#    that is always a member of GID 0, so g=u is the whole trick.
+RUN for d in /opt/dreamfactory/storage /opt/dreamfactory/bootstrap/cache /opt/dreamfactory/.env /opt/dreamfactory/public \
+             /var/lib/nginx /var/log/nginx /etc/nginx /etc/php /run /var/spool/cron /etc/cron.d /etc/ssmtp /var/tmp; do \
+      [ -e "$d" ] && chgrp -R 0 "$d" && chmod -R g=u "$d"; done; \
+    chgrp 0 /opt/dreamfactory && chmod g=u /opt/dreamfactory; \
+    touch /opt/dreamfactory/storage/logs/dreamfactory.log \
+ && chgrp 0 /opt/dreamfactory/storage/logs/dreamfactory.log && chmod g=u /opt/dreamfactory/storage/logs/dreamfactory.log
+
+# 4. Entrypoint: no runtime chown (fails as non-root), no `service` (needs root/init).
+#    Start php-fpm directly, skip cron (run df-scheduler as a CronJob instead).
+RUN sed -i 's/^\(\s*\)chown -R www-data:www-data .*$/\1: # chown removed for OpenShift/' /docker-entrypoint.sh \
+ && sed -i 's|^service "php${PHP_VERSION}-fpm" start|/usr/sbin/php-fpm${PHP_VERSION} --nodaemonize --fpm-config /etc/php/${PHP_VERSION}/fpm/php-fpm.conf \&|' /docker-entrypoint.sh \
+ && sed -i 's|^service "\$PHP_FPM_SERVICE" start|/usr/sbin/php-fpm${PHP_VERSION} --nodaemonize --fpm-config /etc/php/${PHP_VERSION}/fpm/php-fpm.conf \&|' /docker-entrypoint.sh \
+ && sed -i 's|^service cron start.*|: # cron disabled under non-root; run df-scheduler as a CronJob instead|' /docker-entrypoint.sh \
+ && sed -i 's|^\(\s*\)runuser -u www-data -- "\$@"|\1if [ "$(id -u)" = "0" ]; then runuser -u www-data -- "$@"; else "$@"; fi|' /docker-entrypoint.sh \
+ && sed -i 's|^\(\s*\)su -s /bin/bash www-data -c "\$(printf .%q . "\$@")"|\1"$@"|' /docker-entrypoint.sh \
+ && grep -qE "php-fpm\S* --nodaemonize" /docker-entrypoint.sh \
+ && grep -q 'id -u' /docker-entrypoint.sh
+
+EXPOSE 8080
+USER 1001
