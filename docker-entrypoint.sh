@@ -199,6 +199,81 @@ WARN
   esac
 }
 
+# system_db_state: print the state of the system database on one line.
+#   installed             it already holds a DreamFactory schema (migrations and user tables)
+#   empty                 nothing installed yet (df:setup or the /setup_db page installs it)
+#   unreachable <reason>  the database cannot be reached yet (not up, DNS, refused, credentials)
+#   error <reason>        anything else
+system_db_state() {
+  local out result
+  out=$(php -d display_errors=stderr 2>&1 <<'PHP'
+<?php
+  require 'vendor/autoload.php';
+  $app = require 'bootstrap/app.php';
+  try {
+      $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+      // The same tables the app checks: the migrations repository, and "user", whose absence
+      // sends the first request to /setup_db.
+      $installed = $app->make('migrator')->repositoryExists()
+          && Illuminate\Support\Facades\Schema::hasTable('user');
+      echo 'RESULT ' . ($installed ? 'installed' : 'empty') . PHP_EOL;
+  } catch (Throwable $e) {
+      $message = trim((string) strtok($e->getMessage(), "\n"));
+      // Connection-level failures, which a database that is still starting produces.
+      $waiting = false;
+      foreach (['SQLSTATE[HY000] [', 'SQLSTATE[08', 'SQLSTATE[HYT00]', 'No suitable servers found'] as $needle) {
+          $waiting = $waiting || str_contains($message, $needle);
+      }
+      echo 'RESULT ' . ($waiting ? 'unreachable ' : 'error ') . substr($message, 0, 300) . PHP_EOL;
+  }
+PHP
+  ) || true
+  result=$(printf '%s\n' "$out" | sed -n 's/^RESULT //p' | tail -n 1)
+  if [ -z "$result" ]; then
+    result="error $(printf '%s\n' "$out" | grep -v '^[[:space:]]*$' | tail -n 1 | cut -c 1-300)"
+  fi
+  printf '%s\n' "$result"
+}
+
+# migrate_existing_install: apply pending migrations when the system database already holds an
+# installation, so starting a newer image also brings its schema up to date. df:setup only
+# migrates an empty database (once an admin exists it stops at "already setup") and the
+# /setup_db page only runs while the tables are missing, so neither covers an upgrade. An empty
+# database is left to them. Waits for the database like the df:setup loop below, for up to
+# 5 minutes, then starts anyway. Never stops the boot.
+migrate_existing_install() {
+  local state out applied deadline=$((SECONDS + 300))
+  while :; do
+    state=$(system_db_state)
+    case "$state" in
+      installed) break ;;
+      empty) return 0 ;;
+      unreachable\ *)
+        if [ "$SECONDS" -ge "$deadline" ]; then
+          echo "WARNING: system database still not reachable, pending migrations were not applied. Run 'php artisan migrate --force' once it is up." >&2
+          return 0
+        fi
+        echo "${state#unreachable }" >&2
+        echo "Database connection failed. Wait 5 seconds and retry..."
+        sleep 5s ;;
+      *)
+        echo "WARNING: could not check the system database, pending migrations were not applied: ${state#error }" >&2
+        return 0 ;;
+    esac
+  done
+  if out=$(php artisan migrate --force 2>&1); then
+    applied=$(printf '%s\n' "$out" | grep -c ' DONE[[:space:]]*$' || true)
+    if [ "$applied" -gt 0 ]; then
+      echo "Existing installation: applied $applied pending database migration(s)"
+    else
+      echo "Existing installation: database schema is up to date"
+    fi
+  else
+    printf '%s\n' "$out" | tail -n 20 >&2
+    echo "WARNING: 'php artisan migrate --force' failed (output above); starting anyway" >&2
+  fi
+}
+
 # mail setup
 CONF=/etc/ssmtp/ssmtp.conf
 rm -f $CONF
@@ -248,11 +323,17 @@ sed -i "s;%SERVERNAME%;${SERVERNAME:=dreamfactory.app};g" /etc/nginx/sites-avail
 # default; leaving it off behind TLS makes Laravel emit http:// absolute URLs.
 sed -i "s;%HTTPS_HEADER%;${HTTPS_HEADER:=off};g" /etc/nginx/sites-available/dreamfactory.conf
 
-# Wait for MySQL to be ready if using MySQL
+# Wait (up to 30 s) for MySQL to accept connections if using MySQL. A TCP check, because the
+# image has no mysql client; the df:setup and migration steps below wait for the database itself.
 if [ "$DB_CONNECTION" = "mysql" ]; then
     echo "Waiting for MySQL to be ready..."
+    mysql_port=3306
+    if [ -n "$DB_PORT" ] && [[ $DB_PORT != *":"* ]]; then
+        mysql_port=$DB_PORT
+    fi
     for _ in {1..30}; do
-        if mysql -h"$DB_HOST" -u"$DB_USERNAME" -p"$DB_PASSWORD" -e "SELECT 1" >/dev/null 2>&1; then
+        # shellcheck disable=SC2016 # host and port are passed as $0/$1 of the inner shell
+        if timeout 2 bash -c 'exec 3<>"/dev/tcp/$0/$1"' "${DB_HOST:-127.0.0.1}" "$mysql_port" 2>/dev/null; then
             echo "MySQL is ready"
             break
         fi
@@ -355,8 +436,15 @@ if [ -n "$LICENSE" ] && [ -f "/opt/dreamfactory/license/$LICENSE/composer.lock" 
     php artisan config:clear
 fi
 
-# do we have first user provided in env?
 require_admin_password_length
+
+# Existing installation (restart or newer image): bring the system database schema up to date.
+# The trial image keeps its own boot sequence.
+if [ "${DF_INSTALL:-}" != "docker_trial" ]; then
+  migrate_existing_install
+fi
+
+# do we have first user provided in env?
 if [ -n "$ADMIN_EMAIL" ] && [ -n "$ADMIN_PASSWORD" ]; then
     # df:setup requires a phone number but nothing else does; default it so a signup form
     # that only asked for email + password can still bootstrap the first admin.

@@ -112,14 +112,16 @@ Go to `127.0.0.1` in your browser. It will take some time upon building, but you
 
 On start the entrypoint also recreates the `storage/` directory tree (`app`, `logs`, `databases`, `framework/{cache,sessions,views}`) when the mounted volume is empty, creates the sqlite file when `DB_CONNECTION=sqlite`, and fixes ownership to `www-data`.
 
+When the system database already holds a DreamFactory installation, every start also runs `php artisan migrate --force`, so starting a newer image applies its database migrations whether the first admin came from `ADMIN_EMAIL`/`ADMIN_PASSWORD` or from the setup page. It waits up to 5 minutes for the database to come up and logs one line (`Existing installation: ...`). An empty database is still installed by `df:setup` or the setup page.
+
 <a name="licensed"></a>
 ## Running a Licensed Instance
 
 ### 1) Add the license files to the `df-docker` directory
 
-### 2) Uncomment the `COPY composer.*` and `composer config --global --auth` lines of `Dockerfile` (lines 25 and 28) and put your GitHub access key in the latter
+### 2) Uncomment the `COPY composer.*` and `composer config --global --auth` lines of `Dockerfile` (lines 35 and 38) and put your GitHub access key in the latter
 
-### 3) Uncomment the `DF_LICENSE_KEY` line near the end of `Dockerfile` (line 51) and add your license key
+### 3) Uncomment the `DF_LICENSE_KEY` line near the end of `Dockerfile` (line 61) and add your license key
 
 ### 4) Build images
 `docker compose build`
