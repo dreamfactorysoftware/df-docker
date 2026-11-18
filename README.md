@@ -92,6 +92,7 @@ Go to `127.0.0.1` in your browser. It will take some time upon building, but you
 | `CACHE_HOST`, `CACHE_PORT`, `CACHE_DATABASE`, `CACHE_USERNAME`, `CACHE_PASSWORD`, `CACHE_WEIGHT`, `CACHE_PERSISTENT_ID` | – | cache connection (Redis / Memcached) |
 | `REDIS_HOST`, `REDIS_PORT` | – | Redis connection for the `redis` cache/session stores |
 | `SESSION_DRIVER` | `file` | Laravel session driver |
+| `DF_OUTBOUND_ALLOWED_HOSTS` | – | comma-separated internal hostnames, IP addresses or CIDR ranges that outbound requests to remote URLs may reach, e.g. `erp.internal,10.20.0.0/16` |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | – | create the first admin on start (runs `df:setup --force`, so it also works with `APP_ENV=production`). `ADMIN_PASSWORD` must be at least 16 characters |
 | `ADMIN_FIRST_NAME`, `ADMIN_LAST_NAME` | – | optional admin name |
 | `ADMIN_PHONE` | `not-provided` | optional admin phone (required by `df:setup`, defaulted when omitted) |
@@ -112,7 +113,7 @@ Go to `127.0.0.1` in your browser. It will take some time upon building, but you
 
 On start the entrypoint also recreates the `storage/` directory tree (`app`, `logs`, `databases`, `framework/{cache,sessions,views}`) when the mounted volume is empty, creates the sqlite file when `DB_CONNECTION=sqlite`, and fixes ownership to `www-data`.
 
-When the system database already holds a DreamFactory installation, every start also runs `php artisan migrate --force`, so starting a newer image applies its database migrations whether the first admin came from `ADMIN_EMAIL`/`ADMIN_PASSWORD` or from the setup page. It waits up to 5 minutes for the database to come up and logs one line (`Existing installation: ...`). An empty database is still installed by `df:setup` or the setup page.
+When the system database already holds a DreamFactory installation, every start also runs `php artisan migrate --force`, so starting a newer image applies its database migrations whether the first admin came from `ADMIN_EMAIL`/`ADMIN_PASSWORD` or from the setup page. It runs with `--isolated`, so when several containers share one system database and cache (see `docker-compose.yml-load-balance`) only one applies the migrations and the others wait for it. It waits up to 5 minutes in total for the database to come up and for another container's migration to finish, and logs one line (`Existing installation: ...`). An empty database is still installed by `df:setup` or the setup page.
 
 <a name="licensed"></a>
 ## Running a Licensed Instance

@@ -240,9 +240,10 @@ PHP
 # migrates an empty database (once an admin exists it stops at "already setup") and the
 # /setup_db page only runs while the tables are missing, so neither covers an upgrade. An empty
 # database is left to them. Waits for the database like the df:setup loop below, for up to
-# 5 minutes, then starts anyway. Never stops the boot.
+# 5 minutes (shared with waiting for another container's migration), then starts anyway.
+# Never stops the boot.
 migrate_existing_install() {
-  local state out applied deadline=$((SECONDS + 300))
+  local state out applied rc deadline=$((SECONDS + 300))
   while :; do
     state=$(system_db_state)
     case "$state" in
@@ -261,7 +262,20 @@ migrate_existing_install() {
         return 0 ;;
     esac
   done
-  if out=$(php artisan migrate --force 2>&1); then
+  # --isolated=75: when another container sharing this database and cache is migrating right
+  # now, exit with 75 instead of running alongside it, and try again once it has finished.
+  while :; do
+    rc=0
+    out=$(php artisan migrate --force --isolated=75 2>&1) || rc=$?
+    [ "$rc" -eq 75 ] || break
+    if [ "$SECONDS" -ge "$deadline" ]; then
+      echo "WARNING: another container was still migrating the system database; pending migrations were not checked here. Run 'php artisan migrate --force' if needed." >&2
+      return 0
+    fi
+    echo "Another container is applying database migrations. Wait 5 seconds and retry..."
+    sleep 5s
+  done
+  if [ "$rc" -eq 0 ]; then
     applied=$(printf '%s\n' "$out" | grep -c ' DONE[[:space:]]*$' || true)
     if [ "$applied" -gt 0 ]; then
       echo "Existing installation: applied $applied pending database migration(s)"
@@ -287,14 +301,15 @@ fi
 # Filter the env variables for ssmtp configs and write them to the config file
 env | awk -F'\n' '/^SSMTP_/ { print substr($1, 7) }' > "$CONF"
 
-# Configure NGINX and www.conf
-ln -s /etc/nginx/sites-available/dreamfactory.conf /etc/nginx/sites-enabled/dreamfactory.conf && \
-sed -i "s/pm.max_children = 5/pm.max_children = 5000/" /etc/php/8.5/fpm/pool.d/www.conf && \
-sed -i "s/pm.start_servers = 2/pm.start_servers = 150/" /etc/php/8.5/fpm/pool.d/www.conf && \
-sed -i "s/pm.min_spare_servers = 1/pm.min_spare_servers = 100/" /etc/php/8.5/fpm/pool.d/www.conf && \
-sed -i "s/pm.max_spare_servers = 3/pm.max_spare_servers = 200/" /etc/php/8.5/fpm/pool.d/www.conf && \
-sed -i "s/pm = dynamic/pm = ondemand/" /etc/php/8.5/fpm/pool.d/www.conf && \
-sed -i "s/worker_connections 768;/worker_connections 2048;/" /etc/nginx/nginx.conf && \
+# Configure NGINX and www.conf. Every line is safe to repeat, so a container restart applies
+# the same settings again (anchored patterns never rewrite an already tuned value).
+ln -sfn /etc/nginx/sites-available/dreamfactory.conf /etc/nginx/sites-enabled/dreamfactory.conf
+sed -i "s/^pm.max_children = 5$/pm.max_children = 5000/" /etc/php/8.5/fpm/pool.d/www.conf
+sed -i "s/^pm.start_servers = 2$/pm.start_servers = 150/" /etc/php/8.5/fpm/pool.d/www.conf
+sed -i "s/^pm.min_spare_servers = 1$/pm.min_spare_servers = 100/" /etc/php/8.5/fpm/pool.d/www.conf
+sed -i "s/^pm.max_spare_servers = 3$/pm.max_spare_servers = 200/" /etc/php/8.5/fpm/pool.d/www.conf
+sed -i "s/^pm = dynamic$/pm = ondemand/" /etc/php/8.5/fpm/pool.d/www.conf
+sed -i "s/worker_connections 768;/worker_connections 2048;/" /etc/nginx/nginx.conf
 sed -i "s/keepalive_timeout 65;/keepalive_timeout 10;/" /etc/nginx/nginx.conf
 # Install type reported to /status, system/environment and the fresh-instance phone-home.
 # "Docker" unless the image (or the user) sets DF_INSTALL, e.g. docker_trial for the trial
@@ -313,6 +328,13 @@ do
     set_env_var "${var}" "${!var}"
   fi
 done
+
+# Hosts, addresses and CIDR ranges that outbound URL requests may reach (see the README).
+# Entries never contain whitespace; strip it so "a, b" stays a single valid .env value.
+if [ -n "$DF_OUTBOUND_ALLOWED_HOSTS" ]; then
+  echo "Setting DF_OUTBOUND_ALLOWED_HOSTS"
+  set_env_var DF_OUTBOUND_ALLOWED_HOSTS "\"$(printf '%s' "$DF_OUTBOUND_ALLOWED_HOSTS" | tr -d '[:space:]')\""
+fi
 
 # update site configuration
 # if no servername is provided use dreamfactory.app as default
@@ -382,6 +404,17 @@ if [ -n "$CACHE_PASSWORD" ]; then
   echo "Setting CACHE_PASSWORD"
   sed -i "s/#CACHE_PASSWORD=/CACHE_PASSWORD=$CACHE_PASSWORD/" .env
 fi
+
+# Redis connection and session store. Set before the database steps below, which take a
+# cache lock (the redis cache store locks through the default redis connection).
+redis_vars=("REDIS_HOST" "REDIS_PORT" "SESSION_DRIVER")
+for var in "${redis_vars[@]}"
+do
+  if [ -n "${!var}" ]; then
+    echo "Setting ${var}"
+    set_env_var "${var}" "${!var}"
+  fi
+done
 
 # do we have configs for an external DB ?
 if [ -n "$DB_DRIVER" ]; then
@@ -508,19 +541,6 @@ fi
 if [ -n "$APP_LOG_LEVEL" ]; then
   echo "Setting APP_LOG_LEVEL"
   sed -i "s/#APP_LOG_LEVEL=warning/APP_LOG_LEVEL=$APP_LOG_LEVEL/" .env
-fi
-
-if [ -n "$SESSION_DRIVER" ]; then
-  echo "" >> .env
-  echo "SESSION_DRIVER=$SESSION_DRIVER" >> .env
-fi
-
-if [ -n "$REDIS_HOST" ]; then
-  echo "REDIS_HOST=$REDIS_HOST" >> .env
-fi
-
-if [ -n "$REDIS_PORT" ]; then
-  echo "REDIS_PORT=$REDIS_PORT" >> .env
 fi
 
 if [ -n "$EXTERNAL_IP" ]; then
