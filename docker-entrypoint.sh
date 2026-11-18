@@ -275,6 +275,13 @@ migrate_existing_install() {
     echo "Another container is applying database migrations. Wait 5 seconds and retry..."
     sleep 5s
   done
+  # --isolated needs the cache store; if that run failed for another reason, try once without it.
+  if [ "$rc" -ne 0 ]; then
+    printf '%s\n' "$out" | tail -n 5 >&2
+    echo "Retrying 'php artisan migrate --force' without --isolated"
+    rc=0
+    out=$(php artisan migrate --force 2>&1) || rc=$?
+  fi
   if [ "$rc" -eq 0 ]; then
     applied=$(printf '%s\n' "$out" | grep -c ' DONE[[:space:]]*$' || true)
     if [ "$applied" -gt 0 ]; then
@@ -407,7 +414,7 @@ fi
 
 # Redis connection and session store. Set before the database steps below, which take a
 # cache lock (the redis cache store locks through the default redis connection).
-redis_vars=("REDIS_HOST" "REDIS_PORT" "SESSION_DRIVER")
+redis_vars=("REDIS_HOST" "REDIS_PORT" "SESSION_DRIVER" "REDIS_CACHE_LOCK_CONNECTION")
 for var in "${redis_vars[@]}"
 do
   if [ -n "${!var}" ]; then
@@ -415,6 +422,14 @@ do
     set_env_var "${var}" "${!var}"
   fi
 done
+
+# Redis cache configured only through CACHE_HOST/CACHE_PORT (as in docker-compose.yml): take
+# cache locks on the cache connection too, since the default connection points at 127.0.0.1.
+if [ "$CACHE_DRIVER" = "redis" ] && [ -z "$REDIS_HOST" ] && [ -z "$REDIS_CACHE_LOCK_CONNECTION" ] \
+   && [ -z "$(env_file_get REDIS_HOST)" ]; then
+  echo "Setting REDIS_CACHE_LOCK_CONNECTION"
+  set_env_var REDIS_CACHE_LOCK_CONNECTION cache
+fi
 
 # do we have configs for an external DB ?
 if [ -n "$DB_DRIVER" ]; then
