@@ -1,4 +1,14 @@
-FROM dreamfactorysoftware/df-base-img:v7
+FROM dreamfactorysoftware/df-base-img:7.7
+
+# Python3 scripting runs the system interpreter (/usr/bin/python3), which needs the munch module.
+# Base images that already ship python3-munch skip the install. A failed index refresh of one
+# third-party apt source must not block an Ubuntu package, so the import check is the gate.
+RUN if ! /usr/bin/python3 -c "import munch" 2>/dev/null; then \
+        apt-get update || true; \
+        DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-munch; \
+        apt-get clean && rm -rf /var/lib/apt/lists/*; \
+    fi; \
+    /usr/bin/python3 -c "import munch"
 
 # Configure Nginx
 COPY dreamfactory.conf /etc/nginx/sites-available/dreamfactory.conf
@@ -24,6 +34,9 @@ RUN mkdir -p /opt/dreamfactory/storage/app \
 # Add commercial files if running a licensed version
 #COPY composer.* /opt/dreamfactory/
 
+# Add access key to pull the private packages
+#RUN composer config --global --auth github-oauth.github.com "DF_ACCESS_KEY"
+
 # Clear composer cache and install packages
 RUN composer clear-cache && \
     COMPOSER_MEMORY_LIMIT=-1 composer install --no-dev --ignore-platform-reqs --no-scripts && \
@@ -31,6 +44,18 @@ RUN composer clear-cache && \
     php artisan df:env --db_connection=sqlite --df_install=Docker && \
     chown -R www-data:www-data /opt/dreamfactory && \
     rm /etc/nginx/sites-enabled/default
+
+# Install MCP daemon Node.js dependencies (if the daemon package is present)
+RUN if [ -f /opt/dreamfactory/vendor/dreamfactory/df-mcp-server/daemon/package.json ]; then \
+        cd /opt/dreamfactory/vendor/dreamfactory/df-mcp-server/daemon && \
+        npm install --production; \
+    fi
+
+# Install System API MCP daemon Node.js dependencies (if the package is present)
+RUN if [ -f /opt/dreamfactory/vendor/dreamfactory/df-system-mcp-server/package.json ]; then \
+        cd /opt/dreamfactory/vendor/dreamfactory/df-system-mcp-server && \
+        npm install --production; \
+    fi
 
 # Replace YOUR_LICENSE_KEY with your license key, keeping the comma at the end
 #RUN sed -i "s,\#DF_REGISTER_CONTACT=,DF_LICENSE_KEY=YOUR_LICENSE_KEY," /opt/dreamfactory/.env

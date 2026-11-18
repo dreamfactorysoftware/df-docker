@@ -24,6 +24,7 @@
 
 * <a href="#prerequisites">Prerequisites</a>
 * <a href="#installation">Installation</a>
+* <a href="#environment">Environment Variables</a>
 * <a href="#licensed">DreamFactory Licensed Edition</a>
 * <a href="#persistent">Persisting Data</a>
 * <a href="#testing">Testing Data</a>
@@ -46,8 +47,8 @@
 The easiest way to configure the DreamFactory application is to use docker-compose. This will automatically spin up 4 containers, the DreamFactory application, MySQL container for the system database, Redis container for caching, and a <a href="#testing">Postgres database</a> with over 100k records preconfigured for testing.
 
 ### 1) Clone the df-docker repo
-`cd ~/repos` (or wherever you want the clone of the repo to be)  
-`git clone https://github.com/dreamfactorysoftware/df-docker.git`  
+`cd ~/repos` (or wherever you want the clone of the repo to be)
+`git clone https://github.com/dreamfactorysoftware/df-docker.git`
 `cd df-docker`
 
 ### 2) Edit `docker-compose.yml` (optional)
@@ -55,40 +56,79 @@ The easiest way to configure the DreamFactory application is to use docker-compo
 If TLS is terminated in front of the container (reverse proxy, load balancer, or CDN), uncomment `HTTPS_HEADER: "on"` in the `web` service environment so DreamFactory generates `https://` URLs — without it, OAuth discovery metadata and other absolute URLs come out as `http://`. The quotes are required, since a bare `on` is parsed as a YAML boolean.
 
 ### 3) Build images
-`docker-compose build`
+`docker compose build`
 
 ### 4) Start containers
-`docker-compose up -d`
+`docker compose up -d`
 
     NOTE: volume df-storage:/opt/dreamfactory/storage is created to store all file based (apps, logs etc.) data from DreamFactory.
-    This basically stores all data written by DreamFactory (at /opt/dreamfactory/storage location) in the df-storage volume. This 
+    This basically stores all data written by DreamFactory (at /opt/dreamfactory/storage location) in the df-storage volume. This
     way if you delete your DreamFactory container your data will persist as long as you don't delete the df-storage volume.
-    
-    to stop and remove all containers you can use the command 
-    
-        docker-compose down
-    
-    to stop and remove all containers including volumes use 
-    
-        docker-compose down -v
+
+    to stop and remove all containers you can use the command
+
+        docker compose down
+
+    to stop and remove all containers including volumes use
+
+        docker compose down -v
 
 ### 5) Access Admin UI
 Go to `127.0.0.1` in your browser. It will take some time upon building, but you will be asked to create your first admin user.
+
+<a name="environment"></a>
+## Environment Variables
+
+`docker-entrypoint.sh` copies these container environment variables into `/opt/dreamfactory/.env` on every start (php-fpm and cron do not see the container environment, so `.env` is the single source of truth). Unset variables leave the image defaults in place.
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `SERVERNAME` | `dreamfactory.app` | nginx `server_name` |
+| `HTTPS_HEADER` | `off` | set to `"on"` behind a TLS-terminating proxy so Laravel emits `https://` URLs |
+| `APP_KEY` | generated on first start | Laravel encryption key. Pin it (see [Persisting System Database Configs](#persistent)) or encrypted service credentials break when the container is re-created |
+| `DB_DRIVER` / `DB_CONNECTION` | `sqlite` | system database driver (`mysql`, `pgsql`, `sqlsrv`, `sqlite`) |
+| `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` | – | system database connection. With `DB_DRIVER=sqlite`, `DB_DATABASE` may be an absolute path (put it under `/opt/dreamfactory/storage/` so it lives in the volume); the file is created if missing |
+| `CACHE_DRIVER` | `file` | cache store, written to both `CACHE_DRIVER` (legacy) and `CACHE_STORE` (7.x) |
+| `CACHE_HOST`, `CACHE_PORT`, `CACHE_DATABASE`, `CACHE_USERNAME`, `CACHE_PASSWORD`, `CACHE_WEIGHT`, `CACHE_PERSISTENT_ID` | – | cache connection (Redis / Memcached) |
+| `REDIS_HOST`, `REDIS_PORT` | – | Redis connection for the `redis` cache/session stores. With `CACHE_DRIVER=redis` and no `REDIS_HOST`, cache locks use the `CACHE_HOST` connection |
+| `SESSION_DRIVER` | `file` | Laravel session driver |
+| `DF_OUTBOUND_ALLOWED_HOSTS` | – | comma-separated internal hostnames, IP addresses or CIDR ranges that outbound requests to remote URLs may reach, e.g. `erp.internal,10.20.0.0/16` |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | – | create the first admin on start (runs `df:setup --force`, so it also works with `APP_ENV=production`). `ADMIN_PASSWORD` must be at least 16 characters |
+| `ADMIN_FIRST_NAME`, `ADMIN_LAST_NAME` | – | optional admin name |
+| `ADMIN_PHONE` | `not-provided` | optional admin phone (required by `df:setup`, defaulted when omitted) |
+| `PACKAGE` | – | path/URL of a `.dfpkg` to import after `df:setup` |
+| `LICENSE` | – | tier name under `/opt/dreamfactory/license/<tier>/composer.*` to install at start (needs internet) |
+| `DF_LICENSE_KEY` | – | commercial license key |
+| `DF_REGISTER_CONTACT` | – | registration contact e-mail |
+| `DF_INSTALL` | `Docker` | install type reported to `/status`, `system/environment` and the fresh-instance phone-home. Images built for other channels bake their own value (e.g. `docker_trial`) |
+| `DF_TRIAL_TOKEN` | – | **trial image only:** signed trial token from your dashboard at https://portal.dreamfactory.com. No effect on this image |
+| `DF_TRIAL_PORTAL_URL`, `DF_IS_TRIAL`, `DF_TRIAL_HEARTBEAT`, `DF_TRIAL_PROXY` | – | **trial image only:** heartbeat target, trial flag, heartbeat on/off, outbound proxy for the heartbeat (e.g. `http://proxy.corp:3128`). Passed through to `.env` when set; no effect on this image |
+| `JWT_TTL`, `JWT_REFRESH_TTL`, `ALLOW_FOREVER_SESSIONS` | – | session token lifetimes (`DF_JWT_TTL`, ...) |
+| `APP_LOG_LEVEL` | `warning` | Laravel log level |
+| `LOG_TO_STDOUT` | – | also tail `storage/logs/dreamfactory.log` to the container output |
+| `EXTERNAL_IP` | – | public IP/hostname for generated URLs |
+| `LOGSDB_HOST`, `LOGSDB_PORT`, `LOGSDB_DATABASE`, `LOGSDB_USERNAME`, `LOGSDB_PASSWORD`, `LOGSDB_ENABLED` | – | Logs DB (MongoDB) for the logger service |
+| `SENDMAIL_DEFAULT_COMMAND`, `SSMTP_*` | – | outbound mail via ssmtp (`SSMTP_mailhub`, `SSMTP_AuthUser`, ...) |
+| `ENABLE_MCP_DAEMON`, `ENABLE_SYSTEM_MCP_DAEMON` | – | start the MCP daemons (`df-mcp-server`, `df-system-mcp-server`) |
+
+On start the entrypoint also recreates the `storage/` directory tree (`app`, `logs`, `databases`, `framework/{cache,sessions,views}`) when the mounted volume is empty, creates the sqlite file when `DB_CONNECTION=sqlite`, and fixes ownership to `www-data`.
+
+When the system database already holds a DreamFactory installation, every start also runs `php artisan migrate --force`, so starting a newer image applies its database migrations whether the first admin came from `ADMIN_EMAIL`/`ADMIN_PASSWORD` or from the setup page. It runs with `--isolated`, so when several containers that share one system database and cache (see `docker-compose.yml-load-balance`) restart against an existing installation, only one applies the migrations and the others wait for it. On a first install into an empty database, start one container first and add the others once it is up. It waits up to 5 minutes in total for the database to come up and for another container's migration to finish, and logs one line (`Existing installation: ...`). An empty database is still installed by `df:setup` or the setup page.
 
 <a name="licensed"></a>
 ## Running a Licensed Instance
 
 ### 1) Add the license files to the `df-docker` directory
 
-### 2) Uncomment lines 25 and 36 of `Dockerfile`
+### 2) Uncomment the `COPY composer.*` and `composer config --global --auth` lines of `Dockerfile` (lines 35 and 38) and put your GitHub access key in the latter
 
-### 3) Add the License Key to line 36 of `Dockerfile`
+### 3) Uncomment the `DF_LICENSE_KEY` line near the end of `Dockerfile` (line 61) and add your license key
 
 ### 4) Build images
-`docker-compose build`
+`docker compose build`
 
 ### 5) Start containers
-`docker-compose up -d`
+`docker compose up -d`
 
 ### 6) Access the app
 Go to `127.0.0.1` in your browser. It will take some time upon building, but you will be asked to create your first admin user.
@@ -101,16 +141,17 @@ After you have spun up your DreamFactory instance, take the APP_KEY value from t
 Set this value as the APP_KEY value in the docker-compose.yml file (line 28), encapsulating it in single quotes, to avoid receiving "The MAC is invalid" errors within your instance should you ever need to rebuild.
 
 <a name="testing"></a>
-## Testing Data
-We mount a Postgres container that contains over 100k records to test without connecting your own data sets. To utilize the container you will use the following connection details.
+## Use the Included PostgreSQL Database
 
-Host: The host can be found by running the following Docker command: `docker inspect <container-id> | grep "IPAddress"`<br>
-Port: 5432<br>
-Database Name: dellstore<br>
-Username: postgres<br>
-Password: root_pw<br>
+We mount a Postgres container that contains over 100k records to test without connecting your own data sets. To generate a REST API for this database, login to your DreamFactory instance and click the `Connect to Database` button on the home page. Choose PostgreSQL, then add an easily recalled namespace such as pgsql. You can enter anything you'd like into the description field. Click `Next` and enter the below connection details and then press the `Create & Test` button:
 
-This will generate a fully documented and secure API from the Postgres container.
+* Host: example_data
+* Port: 5432
+* Database Name: dellstore
+* Username: postgres
+* Password: root_pw
+
+This will generate a fully documented and secure API from the Postgres container. To use this API you'll next need to create a role-based access control (RBAC) and API key. Head over to the documentation (see below) for instructions.
 
 <a name="documentation"></a>
 ## Documentation
@@ -128,12 +169,3 @@ push notifications? Require API limiting and/or auditing? Schedule a demo [with 
 ## Feedback and Contributions
 
 Feedback is welcome on our [forum](http://community.dreamfactory.com/) or in the form of pull requests and/or issues. Contributions should follow the strategy outlined in ["Contributing to a project"](http://help.github.com/articles/fork-a-repo#contributing-to-a-project).
-
-<a name="additional guidelines"></a>
-## Additional Guidelines
-
-This section includes guidelines that might be helpful for specific usage scenarios and advanced configurations.
-
-### Available Guides
-
-- [Adding Simba Trino ODBC Driver to a Docker Environment](./additional_guidelines/simba_trino_odbc_docker_installation.md)  
