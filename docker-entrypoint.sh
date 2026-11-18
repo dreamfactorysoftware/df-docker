@@ -483,10 +483,13 @@ fi
 require_admin_password_length
 
 # Existing installation (restart or newer image): bring the system database schema up to date.
-# The trial image keeps its own boot sequence.
-if [ "${DF_INSTALL:-}" != "docker_trial" ]; then
-  migrate_existing_install
-fi
+# Every install type, the trial image (DF_INSTALL=docker_trial) included: its sqlite system
+# database lives in the storage volume, so a trial container re-created from a newer image on the
+# same volume and APP_KEY has to apply that image's migrations here as well. Runs after the
+# APP_KEY steps above (a migration may encrypt stored values with this key) and before df:setup
+# and the trial admin check below, so both see the current schema. A new trial volume starts
+# with the image's own migrated database, so there is nothing to apply on its first boot.
+migrate_existing_install
 
 # do we have first user provided in env?
 if [ -n "$ADMIN_EMAIL" ] && [ -n "$ADMIN_PASSWORD" ]; then
