@@ -1,4 +1,4 @@
-FROM dreamfactorysoftware/df-base-img:7.7
+FROM dreamfactorysoftware/df-base-img:7.8
 
 # Python3 scripting runs the system interpreter (/usr/bin/python3), which needs the munch module.
 # Base images that already ship python3-munch skip the install. A failed index refresh of one
