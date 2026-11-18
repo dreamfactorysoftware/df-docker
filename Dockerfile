@@ -1,5 +1,15 @@
 FROM dreamfactorysoftware/df-base-img:7.7
 
+# Python3 scripting runs the system interpreter (/usr/bin/python3), which needs the munch module.
+# Base images that already ship python3-munch skip the install. A failed index refresh of one
+# third-party apt source must not block an Ubuntu package, so the import check is the gate.
+RUN if ! /usr/bin/python3 -c "import munch" 2>/dev/null; then \
+        apt-get update || true; \
+        DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-munch; \
+        apt-get clean && rm -rf /var/lib/apt/lists/*; \
+    fi; \
+    /usr/bin/python3 -c "import munch"
+
 # Configure Nginx
 COPY dreamfactory.conf /etc/nginx/sites-available/dreamfactory.conf
 

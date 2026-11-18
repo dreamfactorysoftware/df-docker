@@ -199,6 +199,102 @@ WARN
   esac
 }
 
+# system_db_state: print the state of the system database on one line.
+#   installed             it already holds a DreamFactory schema (migrations and user tables)
+#   empty                 nothing installed yet (df:setup or the /setup_db page installs it)
+#   unreachable <reason>  the database cannot be reached yet (not up, DNS, refused, credentials)
+#   error <reason>        anything else
+system_db_state() {
+  local out result
+  out=$(php -d display_errors=stderr 2>&1 <<'PHP'
+<?php
+  require 'vendor/autoload.php';
+  $app = require 'bootstrap/app.php';
+  try {
+      $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+      // The same tables the app checks: the migrations repository, and "user", whose absence
+      // sends the first request to /setup_db.
+      $installed = $app->make('migrator')->repositoryExists()
+          && Illuminate\Support\Facades\Schema::hasTable('user');
+      echo 'RESULT ' . ($installed ? 'installed' : 'empty') . PHP_EOL;
+  } catch (Throwable $e) {
+      $message = trim((string) strtok($e->getMessage(), "\n"));
+      // Connection-level failures, which a database that is still starting produces.
+      $waiting = false;
+      foreach (['SQLSTATE[HY000] [', 'SQLSTATE[08', 'SQLSTATE[HYT00]', 'No suitable servers found'] as $needle) {
+          $waiting = $waiting || str_contains($message, $needle);
+      }
+      echo 'RESULT ' . ($waiting ? 'unreachable ' : 'error ') . substr($message, 0, 300) . PHP_EOL;
+  }
+PHP
+  ) || true
+  result=$(printf '%s\n' "$out" | sed -n 's/^RESULT //p' | tail -n 1)
+  if [ -z "$result" ]; then
+    result="error $(printf '%s\n' "$out" | grep -v '^[[:space:]]*$' | tail -n 1 | cut -c 1-300)"
+  fi
+  printf '%s\n' "$result"
+}
+
+# migrate_existing_install: apply pending migrations when the system database already holds an
+# installation, so starting a newer image also brings its schema up to date. df:setup only
+# migrates an empty database (once an admin exists it stops at "already setup") and the
+# /setup_db page only runs while the tables are missing, so neither covers an upgrade. An empty
+# database is left to them. Waits for the database like the df:setup loop below, for up to
+# 5 minutes (shared with waiting for another container's migration), then starts anyway.
+# Never stops the boot.
+migrate_existing_install() {
+  local state out applied rc deadline=$((SECONDS + 300))
+  while :; do
+    state=$(system_db_state)
+    case "$state" in
+      installed) break ;;
+      empty) return 0 ;;
+      unreachable\ *)
+        if [ "$SECONDS" -ge "$deadline" ]; then
+          echo "WARNING: system database still not reachable, pending migrations were not applied. Run 'php artisan migrate --force' once it is up." >&2
+          return 0
+        fi
+        echo "${state#unreachable }" >&2
+        echo "Database connection failed. Wait 5 seconds and retry..."
+        sleep 5s ;;
+      *)
+        echo "WARNING: could not check the system database, pending migrations were not applied: ${state#error }" >&2
+        return 0 ;;
+    esac
+  done
+  # --isolated=75: when another container sharing this database and cache is migrating right
+  # now, exit with 75 instead of running alongside it, and try again once it has finished.
+  while :; do
+    rc=0
+    out=$(php artisan migrate --force --isolated=75 2>&1) || rc=$?
+    [ "$rc" -eq 75 ] || break
+    if [ "$SECONDS" -ge "$deadline" ]; then
+      echo "WARNING: another container was still migrating the system database; pending migrations were not checked here. Run 'php artisan migrate --force' if needed." >&2
+      return 0
+    fi
+    echo "Another container is applying database migrations. Wait 5 seconds and retry..."
+    sleep 5s
+  done
+  # --isolated needs the cache store; if that run failed for another reason, try once without it.
+  if [ "$rc" -ne 0 ]; then
+    printf '%s\n' "$out" | tail -n 5 >&2
+    echo "Retrying 'php artisan migrate --force' without --isolated"
+    rc=0
+    out=$(php artisan migrate --force 2>&1) || rc=$?
+  fi
+  if [ "$rc" -eq 0 ]; then
+    applied=$(printf '%s\n' "$out" | grep -c ' DONE[[:space:]]*$' || true)
+    if [ "$applied" -gt 0 ]; then
+      echo "Existing installation: applied $applied pending database migration(s)"
+    else
+      echo "Existing installation: database schema is up to date"
+    fi
+  else
+    printf '%s\n' "$out" | tail -n 20 >&2
+    echo "WARNING: 'php artisan migrate --force' failed (output above); starting anyway" >&2
+  fi
+}
+
 # mail setup
 CONF=/etc/ssmtp/ssmtp.conf
 rm -f $CONF
@@ -212,14 +308,15 @@ fi
 # Filter the env variables for ssmtp configs and write them to the config file
 env | awk -F'\n' '/^SSMTP_/ { print substr($1, 7) }' > "$CONF"
 
-# Configure NGINX and www.conf
-ln -s /etc/nginx/sites-available/dreamfactory.conf /etc/nginx/sites-enabled/dreamfactory.conf && \
-sed -i "s/pm.max_children = 5/pm.max_children = 5000/" /etc/php/8.5/fpm/pool.d/www.conf && \
-sed -i "s/pm.start_servers = 2/pm.start_servers = 150/" /etc/php/8.5/fpm/pool.d/www.conf && \
-sed -i "s/pm.min_spare_servers = 1/pm.min_spare_servers = 100/" /etc/php/8.5/fpm/pool.d/www.conf && \
-sed -i "s/pm.max_spare_servers = 3/pm.max_spare_servers = 200/" /etc/php/8.5/fpm/pool.d/www.conf && \
-sed -i "s/pm = dynamic/pm = ondemand/" /etc/php/8.5/fpm/pool.d/www.conf && \
-sed -i "s/worker_connections 768;/worker_connections 2048;/" /etc/nginx/nginx.conf && \
+# Configure NGINX and www.conf. Every line is safe to repeat, so a container restart applies
+# the same settings again (anchored patterns never rewrite an already tuned value).
+ln -sfn /etc/nginx/sites-available/dreamfactory.conf /etc/nginx/sites-enabled/dreamfactory.conf
+sed -i "s/^pm.max_children = 5$/pm.max_children = 5000/" /etc/php/8.5/fpm/pool.d/www.conf
+sed -i "s/^pm.start_servers = 2$/pm.start_servers = 150/" /etc/php/8.5/fpm/pool.d/www.conf
+sed -i "s/^pm.min_spare_servers = 1$/pm.min_spare_servers = 100/" /etc/php/8.5/fpm/pool.d/www.conf
+sed -i "s/^pm.max_spare_servers = 3$/pm.max_spare_servers = 200/" /etc/php/8.5/fpm/pool.d/www.conf
+sed -i "s/^pm = dynamic$/pm = ondemand/" /etc/php/8.5/fpm/pool.d/www.conf
+sed -i "s/worker_connections 768;/worker_connections 2048;/" /etc/nginx/nginx.conf
 sed -i "s/keepalive_timeout 65;/keepalive_timeout 10;/" /etc/nginx/nginx.conf
 # Install type reported to /status, system/environment and the fresh-instance phone-home.
 # "Docker" unless the image (or the user) sets DF_INSTALL, e.g. docker_trial for the trial
@@ -239,6 +336,13 @@ do
   fi
 done
 
+# Hosts, addresses and CIDR ranges that outbound URL requests may reach (see the README).
+# Entries never contain whitespace; strip it so "a, b" stays a single valid .env value.
+if [ -n "$DF_OUTBOUND_ALLOWED_HOSTS" ]; then
+  echo "Setting DF_OUTBOUND_ALLOWED_HOSTS"
+  set_env_var DF_OUTBOUND_ALLOWED_HOSTS "\"$(printf '%s' "$DF_OUTBOUND_ALLOWED_HOSTS" | tr -d '[:space:]')\""
+fi
+
 # update site configuration
 # if no servername is provided use dreamfactory.app as default
 sed -i "s;%SERVERNAME%;${SERVERNAME:=dreamfactory.app};g" /etc/nginx/sites-available/dreamfactory.conf
@@ -248,11 +352,17 @@ sed -i "s;%SERVERNAME%;${SERVERNAME:=dreamfactory.app};g" /etc/nginx/sites-avail
 # default; leaving it off behind TLS makes Laravel emit http:// absolute URLs.
 sed -i "s;%HTTPS_HEADER%;${HTTPS_HEADER:=off};g" /etc/nginx/sites-available/dreamfactory.conf
 
-# Wait for MySQL to be ready if using MySQL
+# Wait (up to 30 s) for MySQL to accept connections if using MySQL. A TCP check, because the
+# image has no mysql client; the df:setup and migration steps below wait for the database itself.
 if [ "$DB_CONNECTION" = "mysql" ]; then
     echo "Waiting for MySQL to be ready..."
+    mysql_port=3306
+    if [ -n "$DB_PORT" ] && [[ $DB_PORT != *":"* ]]; then
+        mysql_port=$DB_PORT
+    fi
     for _ in {1..30}; do
-        if mysql -h"$DB_HOST" -u"$DB_USERNAME" -p"$DB_PASSWORD" -e "SELECT 1" >/dev/null 2>&1; then
+        # shellcheck disable=SC2016 # host and port are passed as $0/$1 of the inner shell
+        if timeout 2 bash -c 'exec 3<>"/dev/tcp/$0/$1"' "${DB_HOST:-127.0.0.1}" "$mysql_port" 2>/dev/null; then
             echo "MySQL is ready"
             break
         fi
@@ -302,6 +412,25 @@ if [ -n "$CACHE_PASSWORD" ]; then
   sed -i "s/#CACHE_PASSWORD=/CACHE_PASSWORD=$CACHE_PASSWORD/" .env
 fi
 
+# Redis connection and session store. Set before the database steps below, which take a
+# cache lock (the redis cache store locks through the default redis connection).
+redis_vars=("REDIS_HOST" "REDIS_PORT" "SESSION_DRIVER" "REDIS_CACHE_LOCK_CONNECTION")
+for var in "${redis_vars[@]}"
+do
+  if [ -n "${!var}" ]; then
+    echo "Setting ${var}"
+    set_env_var "${var}" "${!var}"
+  fi
+done
+
+# Redis cache configured only through CACHE_HOST/CACHE_PORT (as in docker-compose.yml): take
+# cache locks on the cache connection too, since the default connection points at 127.0.0.1.
+if [ "$CACHE_DRIVER" = "redis" ] && [ -z "$REDIS_HOST" ] && [ -z "$REDIS_CACHE_LOCK_CONNECTION" ] \
+   && [ -z "$(env_file_get REDIS_HOST)" ]; then
+  echo "Setting REDIS_CACHE_LOCK_CONNECTION"
+  set_env_var REDIS_CACHE_LOCK_CONNECTION cache
+fi
+
 # do we have configs for an external DB ?
 if [ -n "$DB_DRIVER" ]; then
   echo "Setting DB_DRIVER, DB_HOST, DB_USERNAME, DB_PASSWORD, and DB_DATABASE"
@@ -326,11 +455,7 @@ ensure_storage_tree
 
 # do we have an existing APP_KEY we should reuse ?
 if [ -n "$APP_KEY" ]; then
-  if [ "${DF_INSTALL:-}" = "docker_trial" ]; then
-    echo "Setting APP_KEY from environment"   # trial logs end up in support tickets: no secret
-  else
-    echo "Setting APP_KEY=$APP_KEY from environment"
-  fi
+  echo "Using APP_KEY from the environment"
   sed -i "s#APP_KEY=.*#APP_KEY=$APP_KEY#" .env
 else
   # generate AppKey on first run
@@ -355,8 +480,15 @@ if [ -n "$LICENSE" ] && [ -f "/opt/dreamfactory/license/$LICENSE/composer.lock" 
     php artisan config:clear
 fi
 
-# do we have first user provided in env?
 require_admin_password_length
+
+# Existing installation (restart or newer image): bring the system database schema up to date.
+# The trial image keeps its own boot sequence.
+if [ "${DF_INSTALL:-}" != "docker_trial" ]; then
+  migrate_existing_install
+fi
+
+# do we have first user provided in env?
 if [ -n "$ADMIN_EMAIL" ] && [ -n "$ADMIN_PASSWORD" ]; then
     # df:setup requires a phone number but nothing else does; default it so a signup form
     # that only asked for email + password can still bootstrap the first admin.
@@ -420,19 +552,6 @@ fi
 if [ -n "$APP_LOG_LEVEL" ]; then
   echo "Setting APP_LOG_LEVEL"
   sed -i "s/#APP_LOG_LEVEL=warning/APP_LOG_LEVEL=$APP_LOG_LEVEL/" .env
-fi
-
-if [ -n "$SESSION_DRIVER" ]; then
-  echo "" >> .env
-  echo "SESSION_DRIVER=$SESSION_DRIVER" >> .env
-fi
-
-if [ -n "$REDIS_HOST" ]; then
-  echo "REDIS_HOST=$REDIS_HOST" >> .env
-fi
-
-if [ -n "$REDIS_PORT" ]; then
-  echo "REDIS_PORT=$REDIS_PORT" >> .env
 fi
 
 if [ -n "$EXTERNAL_IP" ]; then
