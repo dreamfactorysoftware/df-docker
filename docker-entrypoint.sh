@@ -455,11 +455,7 @@ ensure_storage_tree
 
 # do we have an existing APP_KEY we should reuse ?
 if [ -n "$APP_KEY" ]; then
-  if [ "${DF_INSTALL:-}" = "docker_trial" ]; then
-    echo "Setting APP_KEY from environment"   # trial logs end up in support tickets: no secret
-  else
-    echo "Setting APP_KEY=$APP_KEY from environment"
-  fi
+  echo "Using APP_KEY from the environment"
   sed -i "s#APP_KEY=.*#APP_KEY=$APP_KEY#" .env
 else
   # generate AppKey on first run
